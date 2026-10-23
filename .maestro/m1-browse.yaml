@@ -1,0 +1,80 @@
+# Library browse on the standard test set (scripts/test-media.ps1 -Mode standard):
+# songs sorting, album detail in disc/track order, artist detail, album sorting.
+appId: com.anywecon.aulos
+---
+- runFlow: common/fresh-start.yaml
+
+# Songs: the default view, sortable by title, artist and date added.
+- assertVisible:
+    id: 'song-0'
+- tapOn:
+    id: 'songs-sort'
+- assertVisible: 'Sort by artist'
+- tapOn:
+    id: 'songs-sort'
+- assertVisible: 'Sort by date added'
+- tapOn:
+    id: 'songs-sort'
+- assertVisible: 'Sort by title'
+
+# Albums: a two-disc album lists disc 1 before disc 2.
+- tapOn:
+    id: 'section-albums'
+- scrollUntilVisible:
+    element: 'Dïsc Çollection'
+- tapOn: 'Dïsc Çollection'
+- assertVisible:
+    id: 'detail-title'
+    text: 'Dïsc Çollection'
+- assertVisible:
+    text: 'Señorita'
+    below: 'Café del Mar'
+- assertVisible:
+    text: 'Über Alles'
+    below: 'Señorita'
+- back
+
+# The Greek album in track order, and its artist from the album header.
+- scrollUntilVisible:
+    element: 'Ο Μεγάλος Ερωτικός'
+- tapOn: 'Ο Μεγάλος Ερωτικός'
+- assertVisible:
+    text: 'Χάρτινο το Φεγγαράκι'
+    below: 'Τα Παιδιά του Πειραιά'
+- assertVisible:
+    text: 'Ο Ταχυδρόμος Πέθανε'
+    below: 'Χάρτινο το Φεγγαράκι'
+- tapOn:
+    text: 'Μάνος Χατζιδάκις'
+    index: 0
+- assertVisible:
+    id: 'detail-title'
+    text: 'Μάνος Χατζιδάκις'
+- assertVisible:
+    id: 'artist-album-0'
+- assertVisible: 'Songs'
+- back
+- back
+
+# Album sorting cycles name -> artist -> year (the test set has year tags) -> name.
+- tapOn:
+    id: 'albums-sort'
+- assertVisible: 'Sort by artist'
+- tapOn:
+    id: 'albums-sort'
+- assertVisible: 'Sort by year'
+- tapOn:
+    id: 'albums-sort'
+- assertVisible: 'Sort by name'
+
+# Artists: open one from the list.
+- tapOn:
+    id: 'section-artists'
+- scrollUntilVisible:
+    element: 'Aulos Test'
+- tapOn: 'Aulos Test'
+- assertVisible:
+    id: 'detail-title'
+    text: 'Aulos Test'
+- assertVisible: 'Gapless Test'
+- back

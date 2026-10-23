@@ -1,0 +1,108 @@
+# Playback on the 3-track "Gapless Test" album: play, pause, next, previous, shuffle, repeat,
+# queue reorder and remove, automatic advance, mini player.
+# Tracks are 3 s long, so the controls are exercised while paused.
+appId: com.anywecon.aulos
+---
+- runFlow: common/fresh-start.yaml
+- tapOn:
+    id: 'section-albums'
+- scrollUntilVisible:
+    element: 'Gapless Test'
+- tapOn: 'Gapless Test'
+- tapOn:
+    id: 'album-play'
+
+# The mini player appears and opens Now Playing.
+- extendedWaitUntil:
+    visible:
+      id: 'mini-player'
+    timeout: 10000
+- tapOn:
+    id: 'mini-player'
+- assertVisible:
+    id: 'now-playing'
+- assertVisible:
+    id: 'np-title'
+    text: 'Gapless part .'
+
+# Pause, then step back to the first track (previous within 3 s goes to the previous track).
+- tapOn:
+    id: 'np-play-pause'
+- assertVisible: 'Play'
+- tapOn:
+    id: 'np-previous'
+- tapOn:
+    id: 'np-previous'
+- tapOn:
+    id: 'np-previous'
+- assertVisible:
+    id: 'np-title'
+    text: 'Gapless part 1'
+- tapOn:
+    id: 'np-next'
+- assertVisible:
+    id: 'np-title'
+    text: 'Gapless part 2'
+- tapOn:
+    id: 'np-next'
+- assertVisible:
+    id: 'np-title'
+    text: 'Gapless part 3'
+- tapOn:
+    id: 'np-previous'
+- assertVisible:
+    id: 'np-title'
+    text: 'Gapless part 2'
+
+# Shuffle on/off and the repeat cycle.
+- tapOn:
+    id: 'np-shuffle'
+- assertVisible: 'Shuffle on'
+- tapOn:
+    id: 'np-shuffle'
+- assertVisible: 'Shuffle off'
+- tapOn:
+    id: 'np-repeat'
+- assertVisible: 'Repeat all'
+- tapOn:
+    id: 'np-repeat'
+- assertVisible: 'Repeat one'
+- tapOn:
+    id: 'np-repeat'
+- assertVisible: 'Repeat off'
+
+# Queue: drag the first track to the end, then remove it.
+- tapOn:
+    id: 'np-queue'
+- assertVisible:
+    id: 'queue-item-0'
+- swipe:
+    from:
+      id: 'queue-handle-0'
+    direction: DOWN
+    duration: 1500
+- assertVisible:
+    text: 'Gapless part 1'
+    below: 'Gapless part 3'
+- tapOn:
+    id: 'queue-remove-2'
+- assertNotVisible: 'Gapless part 1'
+- back
+
+# Play: part 2 runs into part 3 by itself.
+- tapOn:
+    id: 'np-play-pause'
+- assertVisible: 'Pause'
+- extendedWaitUntil:
+    visible:
+      id: 'np-title'
+      text: 'Gapless part 3'
+    timeout: 15000
+
+# Back to the Library: the mini player stays and controls playback.
+- tapOn:
+    id: 'np-close'
+- assertVisible:
+    id: 'mini-title'
+- tapOn:
+    id: 'mini-play-pause'

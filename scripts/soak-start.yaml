@@ -1,0 +1,29 @@
+# Used by soak-playback.ps1 (not part of the .maestro/ suite): fresh start, play every song with
+# repeat all so the queue never runs out, leave the app in the background.
+appId: com.anywecon.aulos
+---
+- launchApp:
+    clearState: true
+    permissions:
+      all: deny
+- tapOn:
+    text: 'Allow'
+- extendedWaitUntil:
+    visible:
+      id: 'last-result'
+    timeout: 120000
+- tapOn:
+    id: 'songs-play-all'
+- extendedWaitUntil:
+    visible:
+      id: 'mini-player'
+    timeout: 10000
+- tapOn:
+    id: 'mini-player'
+- tapOn:
+    id: 'np-repeat'
+- assertVisible: 'Repeat all'
+- assertVisible: 'Pause'
+- tapOn:
+    id: 'np-close'
+- pressKey: Home

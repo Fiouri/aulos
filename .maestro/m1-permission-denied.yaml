@@ -1,0 +1,26 @@
+# Deny audio access twice ("Don't allow" makes it permanent): the Library shows the blocked state
+# with an Open settings action instead of the Scan button.
+appId: com.anywecon.aulos
+---
+- launchApp:
+    clearState: true
+    permissions:
+      all: deny
+- tapOn:
+    text: 'Don.t allow|Deny'
+- extendedWaitUntil:
+    visible:
+      id: 'permission-denied'
+    timeout: 15000
+- tapOn: 'Grant access'
+- tapOn:
+    text: 'Don.t allow|Deny.*'
+- extendedWaitUntil:
+    visible:
+      id: 'permission-blocked'
+    timeout: 15000
+- assertVisible:
+    id: 'open-settings'
+    text: 'Open settings'
+- assertNotVisible:
+    id: 'scan-button'

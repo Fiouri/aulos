@@ -1,0 +1,50 @@
+# Favorites: a track, an album and an artist show up in the Library's Favorites section.
+appId: com.anywecon.aulos
+---
+- runFlow: common/fresh-start.yaml
+- tapOn:
+    id: 'section-favorites'
+- assertVisible:
+    id: 'favorites-empty'
+
+- tapOn:
+    id: 'section-albums'
+- scrollUntilVisible:
+    element: 'Ο Μεγάλος Ερωτικός'
+- tapOn: 'Ο Μεγάλος Ερωτικός'
+- tapOn:
+    id: 'album-favorite'
+- assertVisible: 'Remove album from favorites'
+- tapOn:
+    id: 'album-track-0-more'
+- tapOn:
+    id: 'menu-favorite'
+- tapOn:
+    text: 'Μάνος Χατζιδάκις'
+    index: 0
+- tapOn:
+    id: 'artist-favorite'
+- assertVisible: 'Remove artist from favorites'
+- back
+- back
+
+- tapOn:
+    id: 'section-favorites'
+- assertVisible:
+    id: 'favorite-track-0'
+- assertVisible: 'Τα Παιδιά του Πειραιά'
+- assertVisible:
+    id: 'favorite-album-0'
+- assertVisible:
+    id: 'favorite-artist-0'
+
+# Removing the track from favorites takes it off the list.
+- tapOn:
+    id: 'favorite-track-0-more'
+- assertVisible: 'Remove from favorites'
+- tapOn:
+    id: 'menu-favorite'
+- assertNotVisible:
+    id: 'favorite-track-0'
+- assertVisible:
+    id: 'favorite-album-0'

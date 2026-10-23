@@ -1,0 +1,33 @@
+# Light theme: switch to Light and capture the Library and Now Playing screens.
+# Screenshots land in the run's output folder; run with --test-output-dir .maestro/screenshots
+appId: com.anywecon.aulos
+---
+- runFlow: common/fresh-start.yaml
+- tapOn: 'Settings'
+- tapOn:
+    id: 'theme-light'
+- tapOn: 'Library'
+- assertVisible:
+    id: 'track-count'
+- takeScreenshot: m1-light-library
+
+- tapOn:
+    id: 'section-albums'
+- scrollUntilVisible:
+    element: 'Ο Μεγάλος Ερωτικός'
+- tapOn: 'Ο Μεγάλος Ερωτικός'
+- tapOn:
+    id: 'album-play'
+- tapOn:
+    id: 'mini-player'
+- tapOn:
+    id: 'np-play-pause'
+- assertVisible: 'Play'
+- takeScreenshot: m1-light-now-playing
+- tapOn:
+    id: 'np-close'
+- back
+
+- tapOn: 'Settings'
+- tapOn:
+    id: 'theme-system'

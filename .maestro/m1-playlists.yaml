@@ -1,0 +1,81 @@
+# Playlists: create, add tracks with multi-select, reorder by drag, rename, delete.
+appId: com.anywecon.aulos
+---
+- runFlow: common/fresh-start.yaml
+
+# Create an empty playlist.
+- tapOn:
+    id: 'section-playlists'
+- tapOn:
+    id: 'playlist-new'
+- inputText: 'Road trip'
+- tapOn:
+    id: 'prompt-confirm'
+- assertVisible:
+    id: 'playlist-empty'
+- back
+
+# Select the three gapless tracks and add them in one go.
+- tapOn:
+    id: 'section-albums'
+- scrollUntilVisible:
+    element: 'Gapless Test'
+- tapOn: 'Gapless Test'
+- longPressOn:
+    id: 'album-track-0'
+- tapOn:
+    id: 'album-track-1'
+- tapOn:
+    id: 'album-track-2'
+- assertVisible:
+    id: 'selection-count'
+    text: '3 selected'
+- tapOn:
+    id: 'selection-add-to-playlist'
+- tapOn: 'Road trip'
+- back
+
+# Open it: three tracks in album order.
+- tapOn:
+    id: 'section-playlists'
+- tapOn: 'Road trip'
+- assertVisible:
+    text: 'Gapless part 2'
+    below: 'Gapless part 1'
+- assertVisible:
+    text: 'Gapless part 3'
+    below: 'Gapless part 2'
+
+# Drag the first track to the end.
+- swipe:
+    from:
+      id: 'playlist-handle-0'
+    direction: DOWN
+    duration: 1500
+- assertVisible:
+    text: 'Gapless part 1'
+    below: 'Gapless part 3'
+
+# Rename.
+- tapOn:
+    id: 'playlist-more'
+- tapOn:
+    id: 'playlist-rename'
+- eraseText: 20
+- inputText: 'Night drive'
+- tapOn:
+    id: 'prompt-confirm'
+- assertVisible:
+    id: 'detail-title'
+    text: 'Night drive'
+
+# Delete, with confirmation.
+- tapOn:
+    id: 'playlist-more'
+- tapOn:
+    id: 'playlist-delete'
+- tapOn:
+    text: 'Delete|DELETE'
+- assertVisible:
+    id: 'section-playlists'
+- assertNotVisible: 'Night drive'

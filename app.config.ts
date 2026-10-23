@@ -48,6 +48,15 @@ const withSplashBehaviorTargetApi: ConfigPlugin = (config) =>
     return mod;
   });
 
+/**
+ * R8 keep rules beyond the consumer rules that Expo modules and React Native libraries ship.
+ * The local media-store module is created by Expo's module registry, and its function results
+ * are read back by name, so keep it whole.
+ */
+const PROGUARD_RULES = `
+-keep class com.anywecon.aulos.mediastore.** { *; }
+`;
+
 const WINDOWS_CMAKE_VERSION = '3.31.6';
 
 /**
@@ -119,6 +128,16 @@ export default ({ config }: ConfigContext): ExpoConfig =>
               backgroundColor: '#208AEF',
               image: './assets/images/splash-icon.png',
               imageWidth: 76,
+            },
+          ],
+          [
+            'expo-build-properties',
+            {
+              android: {
+                enableMinifyInReleaseBuilds: true,
+                enableShrinkResourcesInReleaseBuilds: true,
+                extraProguardRules: PROGUARD_RULES,
+              },
             },
           ],
           ['expo-sqlite', { enableFTS: true }],

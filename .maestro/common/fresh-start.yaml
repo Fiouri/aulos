@@ -1,0 +1,13 @@
+# Fresh install state: clear data, grant audio access at the prompt, wait for the first scan.
+appId: com.anywecon.aulos
+---
+- launchApp:
+    clearState: true
+    permissions:
+      all: deny
+- tapOn:
+    text: 'Allow'
+- extendedWaitUntil:
+    visible:
+      id: 'last-result'
+    timeout: 120000

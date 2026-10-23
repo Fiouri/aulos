@@ -1,0 +1,43 @@
+# Search ignores accents: "χατζιδακις" (no tonos, final ς) finds the Greek album and artist,
+# "beyonce" finds the album tagged "Mötley Beyoncé".
+# Maestro's inputText is ASCII-only on Android, so the Greek query goes in through the clipboard.
+appId: com.anywecon.aulos
+---
+- runFlow: common/fresh-start.yaml
+- tapOn: 'Search'
+- assertVisible:
+    id: 'search-hint'
+- tapOn:
+    id: 'search-input'
+- setClipboard: 'χατζιδακις'
+- pasteText
+- extendedWaitUntil:
+    visible: 'Ο Μεγάλος Ερωτικός'
+    timeout: 10000
+- assertVisible:
+    id: 'search-artist-0'
+- assertVisible: 'Τα Παιδιά του Πειραιά'
+- tapOn: 'Ο Μεγάλος Ερωτικός'
+- assertVisible:
+    id: 'detail-title'
+    text: 'Ο Μεγάλος Ερωτικός'
+- back
+
+- tapOn:
+    id: 'search-clear'
+- tapOn:
+    id: 'search-input'
+- inputText: 'beyonce'
+- extendedWaitUntil:
+    visible: 'Dïsc Çollection'
+    timeout: 10000
+
+- tapOn:
+    id: 'search-clear'
+- tapOn:
+    id: 'search-input'
+- inputText: 'zzzqqq'
+- extendedWaitUntil:
+    visible:
+      id: 'search-no-results'
+    timeout: 10000

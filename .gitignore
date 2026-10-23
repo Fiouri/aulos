@@ -54,3 +54,6 @@ coverage/
 # native module build output
 modules/*/android/build/
 modules/*/android/.cxx/
+
+# Maestro screenshots and run output
+.maestro/screenshots/
