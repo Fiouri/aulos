@@ -8,4 +8,15 @@ module.exports = defineConfig([
   {
     ignores: ['android/*', 'ios/*', 'dist/*', '.expo/*', 'coverage/*', 'expo-env.d.ts'],
   },
+  {
+    // PlayerService is the only module that talks to the audio engine; UI goes through the store.
+    files: ['**/*.ts', '**/*.tsx'],
+    ignores: ['src/player/PlayerService.ts'],
+    rules: {
+      'no-restricted-imports': [
+        'error',
+        { paths: [{ name: 'expo-audio', message: 'Use the player store (src/stores/player).' }] },
+      ],
+    },
+  },
 ]);
