@@ -5,6 +5,7 @@ import { openNodeDb, type NodeDb } from '../../../test/node-db';
 import { assertFts5 } from '../fts';
 import { migrate } from '../migrate';
 import { MIGRATIONS } from '../migrations';
+import { normalizeNullable, normalizeText } from '../../search/normalize';
 
 const insertTrack = (
   db: NodeDb,
@@ -15,8 +16,19 @@ const insertTrack = (
   provider = 'local',
 ) =>
   db.run(
-    'INSERT INTO tracks (provider, provider_ref, title, artist, album) VALUES (?, ?, ?, ?, ?)',
-    [provider, ref, title, artist, album],
+    `INSERT INTO tracks (provider, provider_ref, title, artist, album, title_norm, artist_norm,
+                         album_norm)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+    [
+      provider,
+      ref,
+      title,
+      artist,
+      album,
+      normalizeText(title),
+      normalizeNullable(artist),
+      normalizeNullable(album),
+    ],
   );
 
 const search = async (db: NodeDb, query: string) =>
@@ -27,7 +39,7 @@ const search = async (db: NodeDb, query: string) =>
     )
   ).map((r) => r.rowid);
 
-describe('schema 001', () => {
+describe('schema', () => {
   let db: NodeDb;
   beforeEach(async () => {
     db = openNodeDb();
@@ -85,7 +97,11 @@ describe('schema 001', () => {
 
     it('reindexes updated tracks', async () => {
       const { lastInsertRowId } = await insertTrack(db, '1', 'Old Title', 'Artist');
-      await db.run('UPDATE tracks SET title = ? WHERE id = ?', ['New Title', lastInsertRowId]);
+      await db.run('UPDATE tracks SET title = ?, title_norm = ? WHERE id = ?', [
+        'New Title',
+        'new title',
+        lastInsertRowId,
+      ]);
       expect(await search(db, 'old')).toEqual([]);
       expect(await search(db, 'new')).toEqual([lastInsertRowId]);
     });
@@ -96,17 +112,17 @@ describe('schema 001', () => {
       expect(await search(db, 'gone')).toEqual([]);
     });
 
-    it('folds case and Latin diacritics', async () => {
+    it('indexes the normalised columns', async () => {
       const { lastInsertRowId } = await insertTrack(db, '1', 'Café Müller', 'Χατζιδάκις');
       expect(await search(db, 'cafe')).toEqual([lastInsertRowId]);
-      expect(await search(db, 'MULLER')).toEqual([lastInsertRowId]);
-      expect(await search(db, 'ΧΑΤΖΙΔΆΚΙΣ')).toEqual([lastInsertRowId]);
+      expect(await search(db, 'muller')).toEqual([lastInsertRowId]);
+      expect(await search(db, 'χατζιδακισ')).toEqual([lastInsertRowId]);
     });
 
     it('passes the FTS5 integrity check after inserts, updates and deletes', async () => {
       await insertTrack(db, '1', 'A');
       await insertTrack(db, '2', 'B');
-      await db.run("UPDATE tracks SET artist = 'X'");
+      await db.run("UPDATE tracks SET artist = 'X', artist_norm = 'x'");
       await db.run("DELETE FROM tracks WHERE provider_ref = '1'");
       await expect(
         db.run("INSERT INTO tracks_fts (tracks_fts, rank) VALUES ('integrity-check', 1)"),

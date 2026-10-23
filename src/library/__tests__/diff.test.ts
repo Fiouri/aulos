@@ -18,6 +18,8 @@ const fields = (ref: string, overrides: Partial<LocalTrackFields> = {}): LocalTr
   localPath: `content://media/external/audio/media/${ref}`,
   fileMtime: 1_700_000_000_000,
   fileSize: 4_000_000,
+  year: null,
+  addedAt: 1_600_000_000_000,
   ...overrides,
 });
 
@@ -106,8 +108,11 @@ describe('toTrackFields', () => {
       durationMs: 200_000,
       sizeBytes: 5_000_000,
       dateModified: 1_700_000_000_000,
+      dateAdded: 1_600_000_000_000,
+      year: 1999,
       albumId: '9',
       mimeType: 'audio/flac',
+      folder: 'Music/Album/',
     };
     expect(toTrackFields(audio)).toEqual({
       providerRef: '77',
@@ -121,6 +126,8 @@ describe('toTrackFields', () => {
       localPath: 'content://media/external/audio/media/77',
       fileMtime: 1_700_000_000_000,
       fileSize: 5_000_000,
+      year: 1999,
+      addedAt: 1_600_000_000_000,
     });
   });
 });

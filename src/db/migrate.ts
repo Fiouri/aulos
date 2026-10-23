@@ -4,6 +4,8 @@ export interface Migration {
   version: number;
   name: string;
   sql: string;
+  /** Data step that needs TypeScript (for example a backfill); runs after `sql`, same transaction. */
+  up?: (tx: Db) => Promise<void>;
 }
 
 export class MigrationError extends Error {
@@ -55,6 +57,7 @@ export async function migrate(
     if (appliedVersions.has(m.version)) continue;
     await db.transaction(async (tx) => {
       await tx.exec(m.sql);
+      if (m.up) await m.up(tx);
       await tx.run('INSERT INTO schema_migrations (version, applied_at) VALUES (?, ?)', [
         m.version,
         now(),

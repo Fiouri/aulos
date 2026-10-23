@@ -13,6 +13,9 @@ export interface LocalTrackFields {
   localPath: string;
   fileMtime: number | null;
   fileSize: number | null;
+  year: number | null;
+  /** Only written on insert: when the file first entered the library. */
+  addedAt: number | null;
 }
 
 export interface StoredLocalTrack extends LocalTrackFields {
@@ -38,6 +41,7 @@ const COMPARED_FIELDS = [
   'localPath',
   'fileMtime',
   'fileSize',
+  'year',
 ] as const satisfies readonly (keyof LocalTrackFields)[];
 
 export function toTrackFields(audio: MediaStoreAudio): LocalTrackFields {
@@ -53,6 +57,8 @@ export function toTrackFields(audio: MediaStoreAudio): LocalTrackFields {
     localPath: audio.contentUri,
     fileMtime: audio.dateModified,
     fileSize: audio.sizeBytes,
+    year: audio.year,
+    addedAt: audio.dateAdded,
   };
 }
 

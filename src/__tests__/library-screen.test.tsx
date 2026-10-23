@@ -4,8 +4,8 @@ import { render, screen, userEvent } from '@testing-library/react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import LibraryScreen from '../../app/index';
-import type { MediaStoreAudio } from '../../modules/media-store';
 import { queryAudio } from '../../modules/media-store';
+import { mediaAudio } from '../../test/fixtures';
 import { openNodeDb, type NodeDb } from '../../test/node-db';
 import { DbProvider } from '../db/DbProvider';
 import { migrate } from '../db/migrate';
@@ -28,21 +28,8 @@ const mockQuery = jest.mocked(queryAudio);
 const mockCheck = jest.mocked(checkAudioPermission);
 const mockRequest = jest.mocked(requestAudioPermission);
 
-const audio = (id: string): MediaStoreAudio => ({
-  id,
-  contentUri: `content://media/external/audio/media/${id}`,
-  title: `Song ${id}`,
-  artist: null,
-  album: null,
-  albumArtist: null,
-  trackNo: null,
-  discNo: null,
-  durationMs: 1000,
-  sizeBytes: 1,
-  dateModified: 1,
-  albumId: null,
-  mimeType: 'audio/mpeg',
-});
+const audio = (id: string) =>
+  mediaAudio(id, { artist: null, album: null, trackNo: null, durationMs: 1000 });
 
 describe('<LibraryScreen />', () => {
   let db: NodeDb;
