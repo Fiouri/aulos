@@ -13,7 +13,10 @@ import { MIGRATIONS } from '../db/migrations';
 import { checkAudioPermission, requestAudioPermission } from '../library/permission';
 import { useLibraryStore } from '../stores/library';
 
-jest.mock('../../modules/media-store', () => ({ queryAudio: jest.fn() }));
+jest.mock('../../modules/media-store', () => ({
+  queryAudio: jest.fn(),
+  getVersion: jest.fn(async () => ({ token: 't' })),
+}));
 jest.mock('../library/permission', () => ({
   checkAudioPermission: jest.fn(),
   requestAudioPermission: jest.fn(),

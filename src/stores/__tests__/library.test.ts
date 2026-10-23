@@ -1,22 +1,28 @@
 /**
  * @jest-environment node
  */
-import { queryAudio } from '../../../modules/media-store';
+import { getVersion, queryAudio } from '../../../modules/media-store';
 import { mediaAudio } from '../../../test/fixtures';
 import { openNodeDb, type NodeDb } from '../../../test/node-db';
 import { getKv } from '../../db/kv';
 import { migrate } from '../../db/migrate';
 import { MIGRATIONS } from '../../db/migrations';
 import { checkAudioPermission, requestAudioPermission } from '../../library/permission';
-import { LAST_SCAN_KEY, useLibraryStore } from '../library';
+import {
+  EXCLUDED_FOLDERS_KEY,
+  LAST_SCAN_KEY,
+  MEDIA_VERSION_KEY,
+  useLibraryStore,
+} from '../library';
 
-jest.mock('../../../modules/media-store', () => ({ queryAudio: jest.fn() }));
+jest.mock('../../../modules/media-store', () => ({ queryAudio: jest.fn(), getVersion: jest.fn() }));
 jest.mock('../../library/permission', () => ({
   checkAudioPermission: jest.fn(),
   requestAudioPermission: jest.fn(),
 }));
 
 const mockQuery = jest.mocked(queryAudio);
+const mockVersion = jest.mocked(getVersion);
 const mockCheck = jest.mocked(checkAudioPermission);
 const mockRequest = jest.mocked(requestAudioPermission);
 
@@ -29,8 +35,9 @@ describe('library store', () => {
     db = openNodeDb();
     await migrate(db, MIGRATIONS);
     useLibraryStore.setState(useLibraryStore.getInitialState(), true);
-    [mockQuery, mockCheck, mockRequest].forEach((m) => m.mockReset());
+    [mockQuery, mockCheck, mockRequest, mockVersion].forEach((m) => m.mockReset());
     mockQuery.mockResolvedValue([audio('1'), audio('2'), audio('3')]);
+    mockVersion.mockResolvedValue({ token: 'gen-1' });
   });
   afterEach(() => db.close());
 
@@ -45,6 +52,8 @@ describe('library store', () => {
     expect(state).toMatchObject({ permission: 'granted', status: 'idle', totalTracks: 3 });
     expect(state.lastScan?.result).toMatchObject({ added: 3, removed: 0, total: 3 });
     expect(await getKv(db, LAST_SCAN_KEY)).toEqual(state.lastScan);
+    expect(await getKv(db, MEDIA_VERSION_KEY)).toBe('gen-1');
+    expect(state.revision).toBe(1);
   });
 
   it('restores the count after a restart without rescanning', async () => {
@@ -100,5 +109,40 @@ describe('library store', () => {
     mockCheck.mockResolvedValue(false);
     await useLibraryStore.getState().load(db);
     expect(useLibraryStore.getState().permission).toBe('unknown');
+  });
+  it('rescans on start or resume only when the MediaStore version changed', async () => {
+    mockCheck.mockResolvedValue(true);
+    await useLibraryStore.getState().start(db);
+    await useLibraryStore.getState().refreshIfChanged(db);
+    expect(mockQuery).toHaveBeenCalledTimes(1);
+
+    mockVersion.mockResolvedValue({ token: 'gen-2' });
+    mockQuery.mockResolvedValue([audio('1'), audio('2')]);
+    await useLibraryStore.getState().refreshIfChanged(db);
+
+    expect(mockQuery).toHaveBeenCalledTimes(2);
+    expect(useLibraryStore.getState()).toMatchObject({ totalTracks: 2, revision: 2 });
+    expect(await getKv(db, MEDIA_VERSION_KEY)).toBe('gen-2');
+  });
+
+  it('persists excluded folders and leaves them out of the next scan', async () => {
+    mockCheck.mockResolvedValue(true);
+    mockQuery.mockResolvedValue([
+      mediaAudio('1', { folder: 'Music/A/' }),
+      mediaAudio('2', { folder: 'Music/B/' }),
+    ]);
+    await useLibraryStore.getState().start(db);
+    await useLibraryStore.getState().setExcludedFolders(db, ['Music/B']);
+    await useLibraryStore.getState().scan(db);
+
+    expect(useLibraryStore.getState()).toMatchObject({
+      totalTracks: 1,
+      excludedFolders: ['Music/B/'],
+    });
+    expect(await getKv(db, EXCLUDED_FOLDERS_KEY)).toEqual(['Music/B/']);
+
+    useLibraryStore.setState(useLibraryStore.getInitialState(), true);
+    await useLibraryStore.getState().load(db);
+    expect(useLibraryStore.getState().excludedFolders).toEqual(['Music/B/']);
   });
 });
