@@ -204,4 +204,12 @@ describe('player store', () => {
     expect(fake.window.keys).toContain(fake.currentKey());
     expect(fake.currentKey()).toBe(currentEntry(player().queue)?.key);
   });
+  it('shuffles a whole list with shuffle turned on and every track queued once', async () => {
+    await player().shuffleTracks(tracks);
+    expect(player().queue.original?.map((e) => e.trackId)).toEqual(tracks.map((t) => t.id));
+    expect([...player().queue.entries.map((e) => e.trackId)].sort()).toEqual(
+      tracks.map((t) => t.id).sort(),
+    );
+    expect(fake.playing).toBe(true);
+  });
 });

@@ -27,6 +27,7 @@ import {
   clearQueue,
   currentEntry,
   EMPTY_QUEUE,
+  isShuffled,
   moveEntry,
   nextIndex,
   playNext,
@@ -106,6 +107,8 @@ export interface PlayerState {
 
   init(db: Db, deps?: Partial<PlayerDeps>): Promise<void>;
   playTracks(tracks: readonly Track[], startIndex: number): Promise<void>;
+  /** Turns shuffle on and plays the list from a random track. */
+  shuffleTracks(tracks: readonly Track[]): Promise<void>;
   playNext(tracks: readonly Track[]): Promise<void>;
   addToQueue(tracks: readonly Track[]): Promise<void>;
   play(): void;
@@ -415,6 +418,24 @@ export const usePlayerStore = create<PlayerState>()((set, get) => {
         rt().deps.random,
       );
       await commit(queue);
+      startPlayback();
+    },
+
+    async shuffleTracks(tracks) {
+      if (tracks.length === 0) return;
+      const r = rt();
+      registerTracks(tracks);
+      const { queue } = get();
+      const shuffledQueue = isShuffled(queue) ? queue : setShuffle(queue, true, r.deps.random);
+      const start = Math.floor(r.deps.random() * tracks.length);
+      await commit(
+        playNow(
+          shuffledQueue,
+          tracks.map((t) => t.id),
+          start,
+          r.deps.random,
+        ),
+      );
       startPlayback();
     },
 

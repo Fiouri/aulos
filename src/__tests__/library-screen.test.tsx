@@ -3,15 +3,16 @@ import '@/i18n';
 import { render, screen, userEvent } from '@testing-library/react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
-import LibraryScreen from '../../app/index';
 import { queryAudio } from '../../modules/media-store';
 import { mediaAudio } from '../../test/fixtures';
 import { openNodeDb, type NodeDb } from '../../test/node-db';
 import { DbProvider } from '../db/DbProvider';
+import { useLibraryLifecycle } from '../library/useLibraryLifecycle';
 import { migrate } from '../db/migrate';
 import { MIGRATIONS } from '../db/migrations';
 import { checkAudioPermission, requestAudioPermission } from '../library/permission';
 import { useLibraryStore } from '../stores/library';
+import { LibraryStatus } from '../ui/LibraryStatus';
 
 jest.mock('../../modules/media-store', () => ({
   queryAudio: jest.fn(),
@@ -34,7 +35,15 @@ const mockRequest = jest.mocked(requestAudioPermission);
 const audio = (id: string) =>
   mediaAudio(id, { artist: null, album: null, trackNo: null, durationMs: 1000 });
 
-describe('<LibraryScreen />', () => {
+jest.mock('expo-audio', () => ({}));
+
+/** The Library tab's status card plus the app-wide lifecycle that drives it. */
+function LibraryHarness() {
+  useLibraryLifecycle();
+  return <LibraryStatus />;
+}
+
+describe('<LibraryStatus /> with the library lifecycle', () => {
   let db: NodeDb;
   beforeEach(async () => {
     db = openNodeDb();
@@ -48,7 +57,7 @@ describe('<LibraryScreen />', () => {
     render(
       <SafeAreaProvider initialMetrics={METRICS}>
         <DbProvider db={db}>
-          <LibraryScreen />
+          <LibraryHarness />
         </DbProvider>
       </SafeAreaProvider>,
     );

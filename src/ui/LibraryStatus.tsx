@@ -1,16 +1,16 @@
-import { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { AppState, Linking, StyleSheet, View } from 'react-native';
+import { Linking, StyleSheet, View } from 'react-native';
 
 import { useDb } from '@/db/DbProvider';
 import { useLibraryStore } from '@/stores/library';
-import { AppText } from '@/ui/AppText';
-import { Button } from '@/ui/Button';
-import { Card } from '@/ui/Card';
-import { Screen } from '@/ui/Screen';
-import { Spacing } from '@/ui/theme';
 
-export default function LibraryScreen() {
+import { AppText } from './AppText';
+import { Button } from './Button';
+import { Card } from './Card';
+import { Spacing } from './theme';
+
+/** Track count, last scan, permission states and the Scan button at the top of the Library. */
+export function LibraryStatus() {
   const { t, i18n } = useTranslation();
   const db = useDb();
   const permission = useLibraryStore((s) => s.permission);
@@ -19,15 +19,6 @@ export default function LibraryScreen() {
   const totalTracks = useLibraryStore((s) => s.totalTracks);
   const lastScan = useLibraryStore((s) => s.lastScan);
   const loaded = useLibraryStore((s) => s.loaded);
-
-  useEffect(() => {
-    void useLibraryStore.getState().start(db);
-    // Returning from system settings may have changed the permission.
-    const sub = AppState.addEventListener('change', (next) => {
-      if (next === 'active') void useLibraryStore.getState().load(db);
-    });
-    return () => sub.remove();
-  }, [db]);
 
   const scanning = status === 'scanning';
   const onScan = () => void useLibraryStore.getState().scan(db);
@@ -44,19 +35,30 @@ export default function LibraryScreen() {
     : t('library.neverScanned');
 
   return (
-    <Screen title={t('library.title')}>
+    <View style={styles.container}>
       <Card>
         <View style={styles.countRow}>
-          <AppText variant="display" testID="track-count">
-            {loaded ? String(totalTracks) : '–'}
-          </AppText>
-          <AppText variant="heading">{t('library.tracks', { count: totalTracks })}</AppText>
+          <View style={styles.count}>
+            <AppText variant="heading" testID="track-count">
+              {loaded ? String(totalTracks) : '–'}
+            </AppText>
+            <AppText>{t('library.tracks', { count: totalTracks })}</AppText>
+          </View>
+          {permission !== 'blocked' && (
+            <Button
+              testID="scan-button"
+              variant="secondary"
+              label={scanning ? t('library.scanning') : t('library.scan')}
+              onPress={onScan}
+              busy={scanning}
+            />
+          )}
         </View>
         <AppText variant="secondary" testID="last-scan">
           {lastScanText}
         </AppText>
         {lastScan && (
-          <>
+          <View style={styles.resultRow}>
             <AppText variant="secondary" testID="last-result">
               {t('library.lastResult', {
                 added: lastScan.result.added,
@@ -64,12 +66,12 @@ export default function LibraryScreen() {
                 removed: lastScan.result.removed,
               })}
             </AppText>
-            <AppText variant="secondary">
+            <AppText variant="secondary" testID="scan-duration">
               {t('library.scanDuration', {
                 seconds: (lastScan.result.durationMs / 1000).toFixed(1),
               })}
             </AppText>
-          </>
+          </View>
         )}
       </Card>
 
@@ -83,7 +85,12 @@ export default function LibraryScreen() {
       {permission === 'blocked' && (
         <Card testID="permission-blocked">
           <AppText>{t('library.permissionBlocked')}</AppText>
-          <Button label={t('library.openSettings')} variant="secondary" onPress={onOpenSettings} />
+          <Button
+            testID="open-settings"
+            label={t('library.openSettings')}
+            variant="secondary"
+            onPress={onOpenSettings}
+          />
         </Card>
       )}
 
@@ -104,23 +111,13 @@ export default function LibraryScreen() {
           {t('library.empty')}
         </AppText>
       )}
-
-      {permission !== 'blocked' && (
-        <Button
-          testID="scan-button"
-          label={scanning ? t('library.scanning') : t('library.scan')}
-          onPress={onScan}
-          busy={scanning}
-        />
-      )}
-    </Screen>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  countRow: {
-    flexDirection: 'row',
-    alignItems: 'baseline',
-    gap: Spacing.sm,
-  },
+  container: { gap: Spacing.sm, paddingHorizontal: Spacing.md },
+  countRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+  count: { flexDirection: 'row', alignItems: 'baseline', gap: Spacing.sm },
+  resultRow: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between' },
 });

@@ -10,6 +10,8 @@ export const Colors = {
     accent: '#1F6FEB',
     onAccent: '#FFFFFF',
     danger: '#C62828',
+    selected: '#E3EDFD',
+    scrim: 'rgba(0, 0, 0, 0.4)',
   },
   dark: {
     text: '#ECEDEE',
@@ -20,6 +22,8 @@ export const Colors = {
     accent: '#6EA8FE',
     onAccent: '#0E1012',
     danger: '#FF8A80',
+    selected: '#1D2A3D',
+    scrim: 'rgba(0, 0, 0, 0.6)',
   },
 } as const;
 
