@@ -1,3 +1,5 @@
+# M0 gate: launch, grant audio access, scan, assert the count, restart, assert it persisted.
+# Run with the expected MediaStore music count: maestro test -e EXPECTED_TRACKS=<n> .maestro/
 appId: com.anywecon.aulos
 ---
 - launchApp:
@@ -6,20 +8,44 @@ appId: com.anywecon.aulos
       all: deny
 - tapOn:
     text: 'Allow'
-    optional: true
 - extendedWaitUntil:
     visible:
       id: 'last-result'
     timeout: 60000
 - assertVisible:
     id: 'track-count'
-- assertNotVisible:
-    text: 'Not scanned yet'
+    text: ${EXPECTED_TRACKS}
+- assertVisible:
+    text: '${EXPECTED_TRACKS} added · 0 updated · 0 removed'
+- takeScreenshot: m0-after-first-scan
+
+# Restart: the count and last scan come back from SQLite without a new scan.
+- stopApp
+- launchApp
+- extendedWaitUntil:
+    visible:
+      id: 'last-result'
+    timeout: 30000
+- assertVisible:
+    id: 'track-count'
+    text: ${EXPECTED_TRACKS}
+
+# A rescan of an unchanged library adds and removes nothing.
 - tapOn:
     id: 'scan-button'
 - extendedWaitUntil:
     visible:
-      text: '.*0 added.*'
+      text: '0 added · 0 updated · 0 removed'
     timeout: 60000
 - assertVisible:
     id: 'track-count'
+    text: ${EXPECTED_TRACKS}
+
+# Settings tab renders and switches theme.
+- tapOn: 'Settings'
+- assertVisible: 'GPL-3.0-or-later'
+- tapOn:
+    id: 'theme-dark'
+- takeScreenshot: m0-settings-dark
+- tapOn:
+    id: 'theme-system'
