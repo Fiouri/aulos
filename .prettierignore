@@ -1,0 +1,9 @@
+android/
+ios/
+.expo/
+coverage/
+node_modules/
+package-lock.json
+LICENSE
+SPEC.md
+prompts/
