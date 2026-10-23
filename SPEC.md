@@ -175,10 +175,10 @@ None starts until the previous gate passes on a real phone.
 | Milestone | Scope | Gate |
 | --- | --- | --- |
 | M0 Foundation | Expo SDK 58 project, TS strict, lint, Jest; SQLite schema and migrations; Kotlin MediaStore module; i18n scaffolding | Release APK builds locally with Gradle; typecheck, lint and tests pass with 0 warnings; app starts on a real phone and shows the scanned track count |
-| M1 Offline player | Library scan, queue, gapless, background; lock screen, Bluetooth, sleep timer; playlists, favorites, history, FTS search | 2,000-track scan under 30 s; 1 h screen-off playback with no stop; Maestro flows pass on a real phone |
+| M1 Offline player | Library browse, queue, gapless, background; lock screen, Bluetooth, sleep timer; playlists, favorites, history; FTS search that ignores accents (Greek tonos included); R8 minify and resource shrinking on release | 2,000-track scan under 30 s; 1 h screen-off playback with no stop; cold start under 2 s; all Maestro flows pass on the S23 and on an API 31 emulator |
 | M2 Sources and downloads | SourceProvider interface; Internet Archive and Jamendo; downloads with resume and storage limit | Search, stream and download a track, then play it in airplane mode; provider tests use recorded HTTP fixtures |
 | M3 Nuclear pairing | QR pairing, live remote over SSE; send search results to the PC queue; import Nuclear JSON playlists | Control the PC over LAN and Tailscale; an imported playlist plays on the phone; upstream PR opened |
-| M4 Release | English UI; `clean` flavour; signed APK and SHA-256 on GitHub Releases | 7 days of daily use with zero crashes; fresh install test on a second phone; F-Droid metadata ready |
+| M4 Release | English UI; ABI splits; `clean` flavour; signed APK and SHA-256 on GitHub Releases | 7 days of daily use with zero crashes; fresh install test on a second phone; F-Droid metadata ready |
 
 Verification gate (every milestone and in CI):
 
