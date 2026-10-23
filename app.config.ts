@@ -3,6 +3,7 @@ import {
   type AndroidManifest,
   type ConfigPlugin,
   withAndroidManifest,
+  withAndroidStyles,
   withAppBuildGradle,
 } from 'expo/config-plugins';
 
@@ -26,6 +27,24 @@ const withLegacyStoragePermission: ConfigPlugin = (config) =>
     };
     permissions.push({ $: attributes });
     manifest['uses-permission'] = permissions;
+    return mod;
+  });
+
+const SPLASH_BEHAVIOR = 'android:windowSplashScreenBehavior';
+
+/**
+ * expo-splash-screen writes android:windowSplashScreenBehavior (API 33+) into values/styles.xml.
+ * Mark it tools:targetApi="33" so lint knows older releases simply ignore it.
+ */
+const withSplashBehaviorTargetApi: ConfigPlugin = (config) =>
+  withAndroidStyles(config, (mod) => {
+    const resources = mod.modResults.resources;
+    resources.$ = { ...resources.$, 'xmlns:tools': 'http://schemas.android.com/tools' };
+    for (const style of resources.style ?? []) {
+      for (const item of style.item) {
+        if (item.$.name === SPLASH_BEHAVIOR) item.$['tools:targetApi'] = '33';
+      }
+    }
     return mod;
   });
 
@@ -56,60 +75,67 @@ android {
 
 export default ({ config }: ConfigContext): ExpoConfig =>
   withWindowsCmake(
-    withLegacyStoragePermission({
-      ...config,
-      name: 'Aulos',
-      slug: 'aulos',
-      version: '0.1.0',
-      orientation: 'portrait',
-      icon: './assets/images/icon.png',
-      scheme: 'aulos',
-      userInterfaceStyle: 'automatic',
-      platforms: ['android'],
-      android: {
-        package: 'com.anywecon.aulos',
-        versionCode: 1,
-        adaptiveIcon: {
-          backgroundColor: '#E6F4FE',
-          foregroundImage: './assets/images/android-icon-foreground.png',
-          backgroundImage: './assets/images/android-icon-background.png',
-          monochromeImage: './assets/images/android-icon-monochrome.png',
+    withSplashBehaviorTargetApi(
+      withLegacyStoragePermission({
+        ...config,
+        name: 'Aulos',
+        slug: 'aulos',
+        version: '0.1.0',
+        orientation: 'portrait',
+        icon: './assets/images/icon.png',
+        scheme: 'aulos',
+        userInterfaceStyle: 'automatic',
+        platforms: ['android'],
+        android: {
+          package: 'com.anywecon.aulos',
+          versionCode: 1,
+          adaptiveIcon: {
+            backgroundColor: '#E6F4FE',
+            foregroundImage: './assets/images/android-icon-foreground.png',
+            backgroundImage: './assets/images/android-icon-background.png',
+            monochromeImage: './assets/images/android-icon-monochrome.png',
+          },
+          predictiveBackGestureEnabled: false,
+          // POST_NOTIFICATIONS: expo-audio's media playback service posts the player
+          // notification on Android 13+.
+          permissions: [
+            'android.permission.READ_MEDIA_AUDIO',
+            'android.permission.POST_NOTIFICATIONS',
+          ],
+          blockedPermissions: [
+            'android.permission.INTERNET',
+            'android.permission.RECORD_AUDIO',
+            'android.permission.MODIFY_AUDIO_SETTINGS',
+            'android.permission.SYSTEM_ALERT_WINDOW',
+            'android.permission.WRITE_EXTERNAL_STORAGE',
+            'android.permission.VIBRATE',
+          ],
         },
-        predictiveBackGestureEnabled: false,
-        permissions: ['android.permission.READ_MEDIA_AUDIO'],
-        blockedPermissions: [
-          'android.permission.INTERNET',
-          'android.permission.RECORD_AUDIO',
-          'android.permission.MODIFY_AUDIO_SETTINGS',
-          'android.permission.SYSTEM_ALERT_WINDOW',
-          'android.permission.WRITE_EXTERNAL_STORAGE',
-          'android.permission.VIBRATE',
+        plugins: [
+          'expo-router',
+          [
+            'expo-splash-screen',
+            {
+              backgroundColor: '#208AEF',
+              image: './assets/images/splash-icon.png',
+              imageWidth: 76,
+            },
+          ],
+          ['expo-sqlite', { enableFTS: true }],
+          [
+            'expo-audio',
+            {
+              enableBackgroundPlayback: true,
+              enableBackgroundRecording: false,
+              microphonePermission: false,
+              recordAudioAndroid: false,
+            },
+          ],
         ],
-      },
-      plugins: [
-        'expo-router',
-        [
-          'expo-splash-screen',
-          {
-            backgroundColor: '#208AEF',
-            image: './assets/images/splash-icon.png',
-            imageWidth: 76,
-          },
-        ],
-        ['expo-sqlite', { enableFTS: true }],
-        [
-          'expo-audio',
-          {
-            enableBackgroundPlayback: true,
-            enableBackgroundRecording: false,
-            microphonePermission: false,
-            recordAudioAndroid: false,
-          },
-        ],
-      ],
-      experiments: {
-        typedRoutes: true,
-        reactCompiler: true,
-      },
-    }),
+        experiments: {
+          typedRoutes: true,
+          reactCompiler: true,
+        },
+      }),
+    ),
   );
