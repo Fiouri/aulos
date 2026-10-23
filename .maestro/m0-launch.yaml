@@ -1,0 +1,25 @@
+appId: com.anywecon.aulos
+---
+- launchApp:
+    clearState: true
+    permissions:
+      all: deny
+- tapOn:
+    text: 'Allow'
+    optional: true
+- extendedWaitUntil:
+    visible:
+      id: 'last-result'
+    timeout: 60000
+- assertVisible:
+    id: 'track-count'
+- assertNotVisible:
+    text: 'Not scanned yet'
+- tapOn:
+    id: 'scan-button'
+- extendedWaitUntil:
+    visible:
+      text: '.*0 added.*'
+    timeout: 60000
+- assertVisible:
+    id: 'track-count'
