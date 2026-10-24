@@ -18,8 +18,10 @@ appId: com.anywecon.aulos
 - assertVisible: 'Sort by title'
 
 # Albums: a two-disc album lists disc 1 before disc 2.
-- tapOn:
-    id: 'section-albums'
+- runFlow:
+    file: common/open-section.yaml
+    env:
+      SECTION: albums
 - scrollUntilVisible:
     element: 'Dïsc Çollection'
 - tapOn: 'Dïsc Çollection'
@@ -57,19 +59,31 @@ appId: com.anywecon.aulos
 - back
 
 # Album sorting cycles name -> artist -> year (the test set has year tags) -> name.
+- scrollUntilVisible:
+    element:
+      id: 'albums-sort'
+    direction: UP
 - tapOn:
     id: 'albums-sort'
-- assertVisible: 'Sort by artist'
+- scrollUntilVisible:
+    element: 'Sort by artist'
+    direction: UP
 - tapOn:
     id: 'albums-sort'
-- assertVisible: 'Sort by year'
+- scrollUntilVisible:
+    element: 'Sort by year'
+    direction: UP
 - tapOn:
     id: 'albums-sort'
-- assertVisible: 'Sort by name'
+- scrollUntilVisible:
+    element: 'Sort by name'
+    direction: UP
 
 # Artists: open one from the list.
-- tapOn:
-    id: 'section-artists'
+- runFlow:
+    file: common/open-section.yaml
+    env:
+      SECTION: artists
 - scrollUntilVisible:
     element: 'Aulos Test'
 - tapOn: 'Aulos Test'

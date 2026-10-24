@@ -1,0 +1,10 @@
+# Opens a Library section; the chips sit in the list header, so scroll back up to them first.
+# Usage: runFlow with env SECTION = songs | albums | artists | playlists | favorites | recent
+appId: com.anywecon.aulos
+---
+- scrollUntilVisible:
+    element:
+      id: 'section-${SECTION}'
+    direction: UP
+- tapOn:
+    id: 'section-${SECTION}'

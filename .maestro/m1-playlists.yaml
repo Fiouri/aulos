@@ -4,8 +4,10 @@ appId: com.anywecon.aulos
 - runFlow: common/fresh-start.yaml
 
 # Create an empty playlist.
-- tapOn:
-    id: 'section-playlists'
+- runFlow:
+    file: common/open-section.yaml
+    env:
+      SECTION: playlists
 - tapOn:
     id: 'playlist-new'
 - inputText: 'Road trip'
@@ -16,8 +18,10 @@ appId: com.anywecon.aulos
 - back
 
 # Select the three gapless tracks and add them in one go.
-- tapOn:
-    id: 'section-albums'
+- runFlow:
+    file: common/open-section.yaml
+    env:
+      SECTION: albums
 - scrollUntilVisible:
     element: 'Gapless Test'
 - tapOn: 'Gapless Test'
@@ -36,8 +40,10 @@ appId: com.anywecon.aulos
 - back
 
 # Open it: three tracks in album order.
-- tapOn:
-    id: 'section-playlists'
+- runFlow:
+    file: common/open-section.yaml
+    env:
+      SECTION: playlists
 - tapOn: 'Road trip'
 - assertVisible:
     text: 'Gapless part 2'

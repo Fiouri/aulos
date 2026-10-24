@@ -1,4 +1,4 @@
-import { Pressable, ScrollView, StyleSheet } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
 
 import { AppText } from './AppText';
 import { Spacing, useColors } from './theme';
@@ -15,15 +15,11 @@ interface ChipsProps<T extends string> {
   testIDPrefix: string;
 }
 
-/** Horizontally scrolling single-choice segments. */
+/** Single-choice segments that wrap onto a second line, so every choice stays visible. */
 export function Chips<T extends string>({ chips, value, onChange, testIDPrefix }: ChipsProps<T>) {
   const colors = useColors();
   return (
-    <ScrollView
-      horizontal
-      showsHorizontalScrollIndicator={false}
-      contentContainerStyle={styles.row}
-      accessibilityRole="tablist">
+    <View style={styles.row} accessibilityRole="tablist">
       {chips.map((chip) => {
         const selected = chip.value === value;
         return (
@@ -44,12 +40,18 @@ export function Chips<T extends string>({ chips, value, onChange, testIDPrefix }
           </Pressable>
         );
       })}
-    </ScrollView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  row: { gap: Spacing.sm, paddingHorizontal: Spacing.md, paddingVertical: Spacing.sm },
+  row: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: Spacing.sm,
+    paddingHorizontal: Spacing.md,
+    paddingVertical: Spacing.sm,
+  },
   chip: {
     paddingHorizontal: Spacing.md,
     minHeight: 36,

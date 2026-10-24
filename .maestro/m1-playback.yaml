@@ -4,8 +4,10 @@
 appId: com.anywecon.aulos
 ---
 - runFlow: common/fresh-start.yaml
-- tapOn:
-    id: 'section-albums'
+- runFlow:
+    file: common/open-section.yaml
+    env:
+      SECTION: albums
 - scrollUntilVisible:
     element: 'Gapless Test'
 - tapOn: 'Gapless Test'

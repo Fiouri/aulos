@@ -6,13 +6,18 @@ appId: com.anywecon.aulos
 - tapOn: 'Settings'
 - tapOn:
     id: 'theme-light'
-- tapOn: 'Library'
+# The tab, not the "Library" card heading on the Settings screen.
+- tapOn:
+    text: 'Library'
+    below: 'GPL-3.0-or-later'
 - assertVisible:
     id: 'track-count'
 - takeScreenshot: m1-light-library
 
-- tapOn:
-    id: 'section-albums'
+- runFlow:
+    file: common/open-section.yaml
+    env:
+      SECTION: albums
 - scrollUntilVisible:
     element: 'Ο Μεγάλος Ερωτικός'
 - tapOn: 'Ο Μεγάλος Ερωτικός'

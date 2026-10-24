@@ -2,13 +2,17 @@
 appId: com.anywecon.aulos
 ---
 - runFlow: common/fresh-start.yaml
-- tapOn:
-    id: 'section-favorites'
+- runFlow:
+    file: common/open-section.yaml
+    env:
+      SECTION: favorites
 - assertVisible:
     id: 'favorites-empty'
 
-- tapOn:
-    id: 'section-albums'
+- runFlow:
+    file: common/open-section.yaml
+    env:
+      SECTION: albums
 - scrollUntilVisible:
     element: 'Ο Μεγάλος Ερωτικός'
 - tapOn: 'Ο Μεγάλος Ερωτικός'
@@ -28,8 +32,10 @@ appId: com.anywecon.aulos
 - back
 - back
 
-- tapOn:
-    id: 'section-favorites'
+- runFlow:
+    file: common/open-section.yaml
+    env:
+      SECTION: favorites
 - assertVisible:
     id: 'favorite-track-0'
 - assertVisible: 'Τα Παιδιά του Πειραιά'

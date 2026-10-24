@@ -12,11 +12,16 @@ appId: com.anywecon.aulos
 - setClipboard: 'χατζιδακις'
 - pasteText
 - extendedWaitUntil:
-    visible: 'Ο Μεγάλος Ερωτικός'
+    visible: 'Τα Παιδιά του Πειραιά'
     timeout: 10000
-- assertVisible:
-    id: 'search-artist-0'
-- assertVisible: 'Τα Παιδιά του Πειραιά'
+- hideKeyboard
+- scrollUntilVisible:
+    element:
+      id: 'search-album-0'
+- assertVisible: 'Ο Μεγάλος Ερωτικός'
+- scrollUntilVisible:
+    element:
+      id: 'search-artist-0'
 - tapOn: 'Ο Μεγάλος Ερωτικός'
 - assertVisible:
     id: 'detail-title'
@@ -29,8 +34,11 @@ appId: com.anywecon.aulos
     id: 'search-input'
 - inputText: 'beyonce'
 - extendedWaitUntil:
-    visible: 'Dïsc Çollection'
+    visible: 'Café del Mar'
     timeout: 10000
+- hideKeyboard
+- scrollUntilVisible:
+    element: 'Dïsc Çollection'
 
 - tapOn:
     id: 'search-clear'
