@@ -1,7 +1,7 @@
 import type { Db } from '@/db/types';
 import { getTracks } from '@/library/queries';
 import { LOCAL_PROVIDER } from '@/library/providers';
-import { isAbortError, NetworkError, ProviderError } from '@/net/errors';
+import { isAbortError, NetworkError, ProviderError, RateLimitError } from '@/net/errors';
 import type { NetworkStatus } from '@/net/network';
 import type { DownloadFormat, SourceProvider } from '@/providers/types';
 
@@ -14,9 +14,17 @@ export const MAX_CONCURRENT_DOWNLOADS = 2;
 /** bytes_done is written to the database at most this often while a transfer runs. */
 const PROGRESS_WRITE_MS = 2000;
 const EXTENSIONS = ['mp3', 'flac', 'ogg'] as const;
-/** A download whose connection dropped waits this long before it is tried again, unless the
- * network changes first. */
+/** A download that hit a transient failure (dropped connection, 5xx, 429) waits this long before
+ * it is tried again, unless the network changes first. */
 export const RECONNECT_HOLD_MS = 30_000;
+/** Transient failures in a row before a download is marked failed. */
+export const MAX_TRANSIENT_FAILURES = 3;
+
+/** Failures worth trying again later: no connection, the service busy or rate limiting. */
+function isTransient(error: unknown): boolean {
+  if (error instanceof RateLimitError) return true;
+  return error instanceof NetworkError && (error.status === null || error.status >= 500);
+}
 
 export interface DownloadSettings {
   wifiOnly: boolean;
@@ -108,6 +116,8 @@ export class DownloadManager {
   readonly #runs = new Map<number, Promise<void>>();
   /** Downloads whose connection dropped: not resumed before this time. */
   readonly #holdUntil = new Map<number, number>();
+  /** Transient failures in a row, per download (reset on success and on retry). */
+  readonly #failures = new Map<number, number>();
   #pumpChain: Promise<void> = Promise.resolve();
 
   constructor(deps: DownloadManagerDeps) {
@@ -168,6 +178,7 @@ export class DownloadManager {
   async retry(trackId: number): Promise<void> {
     const row = await this.#row(trackId);
     if (row?.status !== 'failed') return;
+    this.#failures.delete(trackId);
     await this.#setStatus(row, transition('failed', 'retry'), { error: null });
     this.#deps.onChange();
     await this.pump();
@@ -317,16 +328,21 @@ export class DownloadManager {
         );
       });
       current = { ...current, status: 'completed' };
+      this.#failures.delete(id);
       this.#deps.onLibraryChange();
     } catch (error) {
       const stop = this.#stopping.get(id);
       if (stop === 'cancel') return;
-      // A dropped connection (no HTTP status) pauses the download; HTTP failures fail it.
-      const connectionLost = error instanceof NetworkError && error.status === null;
-      if (stop === 'interrupt' || isAbortError(error) || connectionLost) {
+      const failures = isTransient(error) ? (this.#failures.get(id) ?? 0) + 1 : 0;
+      if (stop === 'interrupt' || isAbortError(error)) {
         await this.#finish(current, 'interrupt', { bytesDone, bytesTotal });
-        if (connectionLost && stop === undefined) this.#hold(id);
+      } else if (failures > 0 && failures < MAX_TRANSIENT_FAILURES) {
+        // Paused, and tried again after a hold: the partial file is kept.
+        this.#failures.set(id, failures);
+        await this.#finish(current, 'interrupt', { bytesDone, bytesTotal });
+        this.#hold(id);
       } else {
+        this.#failures.delete(id);
         if (error instanceof StorageLimitError || error instanceof IntegrityError) {
           this.#deletePartials(row.fileName);
           bytesDone = 0;

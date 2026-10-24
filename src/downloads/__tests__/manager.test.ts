@@ -5,7 +5,13 @@ import { openNodeDb, type NodeDb } from '../../../test/node-db';
 import { migrate } from '../../db/migrate';
 import { MIGRATIONS } from '../../db/migrations';
 import { getTracks, type Track } from '../../library/queries';
-import { abortError, NetworkError, NotFoundError } from '../../net/errors';
+import {
+  abortError,
+  InvalidResponseError,
+  NetworkError,
+  NotFoundError,
+  RateLimitError,
+} from '../../net/errors';
 import type { NetworkStatus } from '../../net/network';
 import { storeTracks } from '../../providers/store';
 import type {
@@ -347,13 +353,37 @@ describe('DownloadManager', () => {
     expect(calls[1]?.options.resume).toBe(true);
   });
 
-  it('fails on an HTTP error that is not a dropped connection', async () => {
+  it('fails after three transient failures in a row (5xx, 429, dropped connection)', async () => {
     const manager = createManager();
     await manager.enqueue([ids()[0] ?? 0]);
-    calls[0]?.reject(new NetworkError('Service unavailable', 503));
-    await settle();
+    const failures = [
+      new NetworkError('Service unavailable', 503),
+      new RateLimitError(null),
+      new NetworkError('Download interrupted'),
+    ];
+    for (const [n, error] of failures.entries()) {
+      calls[n]?.reject(error);
+      await settle();
+      if (n < failures.length - 1) {
+        expect(await statuses()).toEqual([`${ids()[0]}:paused`]);
+        now += RECONNECT_HOLD_MS;
+        scheduled.forEach((run) => run());
+        await settle();
+      }
+    }
+    expect(calls).toHaveLength(3);
     expect(await db.getAll('SELECT status, error FROM downloads')).toEqual([
       { status: 'failed', error: 'network' },
+    ]);
+  });
+
+  it('fails at once on an HTTP error that will not go away', async () => {
+    const manager = createManager();
+    await manager.enqueue([ids()[0] ?? 0]);
+    calls[0]?.reject(new InvalidResponseError('Unexpected HTTP status', 403));
+    await settle();
+    expect(await db.getAll('SELECT status, error FROM downloads')).toEqual([
+      { status: 'failed', error: 'invalidResponse' },
     ]);
   });
 

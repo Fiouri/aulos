@@ -12,9 +12,12 @@ appId: com.anywecon.aulos
 - setClipboard: 'χατζιδακις'
 - pasteText
 - extendedWaitUntil:
-    visible: 'Τα Παιδιά του Πειραιά'
+    visible:
+      id: 'search-song-0'
     timeout: 10000
 - hideKeyboard
+- scrollUntilVisible:
+    element: 'Τα Παιδιά του Πειραιά'
 - scrollUntilVisible:
     element:
       id: 'search-album-0'

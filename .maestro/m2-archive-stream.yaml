@@ -1,0 +1,53 @@
+# Internet Archive streaming (needs the network; tagged so offline-only runs can skip it):
+# search the archive, play a track and check that playback position advances.
+# "I Gerakina" (Ioanna Georgakopoulou and Vassilis Tsitsanis, ca. 1940) is a public 78rpm
+# transfer, one 3:20 track.
+appId: com.anywecon.aulos
+tags:
+  - network
+---
+- runFlow: common/fresh-start.yaml
+- tapOn: 'Search'
+- tapOn:
+    id: 'search-source-archive'
+- assertVisible:
+    id: 'search-hint'
+- tapOn:
+    id: 'search-input'
+- inputText: 'gerakina tsitsanis'
+- extendedWaitUntil:
+    visible:
+      id: 'search-song-0'
+    timeout: 30000
+- hideKeyboard
+- assertVisible: 'Ioanna Georgakopoulou and Vassilis Tsitsanis - I Gerakina'
+- tapOn:
+    id: 'search-song-0'
+
+# Streaming: the position passes 5 s and the player shows Pause.
+- extendedWaitUntil:
+    visible:
+      id: 'mini-player'
+    timeout: 20000
+- tapOn:
+    id: 'mini-player'
+- extendedWaitUntil:
+    visible:
+      id: 'np-position'
+      text: '0:(0[5-9]|[1-5][0-9])'
+    timeout: 45000
+- assertVisible: 'Pause'
+
+# The track info names the source.
+- tapOn:
+    id: 'np-close'
+- tapOn:
+    id: 'search-song-0-more'
+- tapOn:
+    id: 'menu-info'
+- assertVisible:
+    id: 'track-info-source'
+    text: 'Internet Archive'
+- back
+- tapOn:
+    id: 'mini-play-pause'

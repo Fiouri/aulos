@@ -1,0 +1,56 @@
+# Download an Internet Archive track, then play it from Downloads in airplane mode.
+# Airplane mode goes through `cmd connectivity airplane-mode` (Maestro setAirplaneMode) and is
+# always switched off again when the flow ends, pass or fail.
+appId: com.anywecon.aulos
+onFlowComplete:
+  - setAirplaneMode: disabled
+---
+- runFlow: common/fresh-start.yaml
+- tapOn: 'Search'
+- tapOn:
+    id: 'search-source-archive'
+- tapOn:
+    id: 'search-input'
+- inputText: 'gerakina tsitsanis'
+- extendedWaitUntil:
+    visible:
+      id: 'search-song-0'
+    timeout: 30000
+- hideKeyboard
+- tapOn:
+    id: 'search-song-0-more'
+- tapOn:
+    id: 'menu-download'
+
+# The download completes (2.9 MB MP3, MD5 checked) and is listed under Downloads.
+- tapOn: 'Settings'
+- scrollUntilVisible:
+    element:
+      id: 'settings-downloads'
+- tapOn:
+    id: 'settings-downloads'
+- extendedWaitUntil:
+    visible:
+      id: 'download-completed-0'
+    timeout: 120000
+- assertVisible: 'Ioanna Georgakopoulou and Vassilis Tsitsanis - I Gerakina'
+
+# Offline: it plays from the file.
+- setAirplaneMode: enabled
+- tapOn:
+    id: 'download-completed-0'
+- extendedWaitUntil:
+    visible:
+      id: 'mini-player'
+    timeout: 20000
+- tapOn:
+    id: 'mini-player'
+- extendedWaitUntil:
+    visible:
+      id: 'np-position'
+      text: '0:(0[3-9]|[1-5][0-9])'
+    timeout: 30000
+- assertVisible: 'Pause'
+- tapOn:
+    id: 'np-play-pause'
+- setAirplaneMode: disabled
