@@ -15,10 +15,11 @@ describe('migration 002 (search)', () => {
     db = openNodeDb();
     await migrate(db, V1);
     await db.run(
-      `INSERT INTO tracks (provider, provider_ref, title, artist, album, album_artist, file_mtime)
+      `INSERT INTO tracks (provider, provider_ref, title, artist, album, album_artist, file_mtime,
+                           local_path)
        VALUES ('local', '1', 'Χάρτινο το Φεγγαράκι', 'Μάνος Χατζιδάκις', 'Ο Μεγάλος Ερωτικός',
-               NULL, 1600000000000),
-              ('local', '2', 'Halo', 'Beyoncé', NULL, 'Beyoncé', NULL)`,
+               NULL, 1600000000000, 'content://media/1'),
+              ('local', '2', 'Halo', 'Beyoncé', NULL, 'Beyoncé', NULL, 'content://media/2')`,
     );
   });
   afterEach(() => db.close());
@@ -86,7 +87,7 @@ describe('migration 002 (search)', () => {
         name: 'Ο Μεγάλος Ερωτικός',
         artist: 'Μάνος Χατζιδάκις',
         name_norm: 'ο μεγαλοσ ερωτικοσ',
-        sample_path: null,
+        sample_path: 'content://media/1',
       },
     ]);
     expect(await db.getAll('SELECT name, name_norm FROM artists ORDER BY name_norm')).toEqual([

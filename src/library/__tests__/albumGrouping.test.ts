@@ -24,9 +24,21 @@ describe('albumGroupKey', () => {
     expect(albumGroupKey({ ...local, album: null, albumArtist: 'X' })).toBeNull();
   });
 
-  it('keys other providers by album name and their album reference', () => {
-    expect(albumGroupKey({ ...local, provider: 'nuclear', album: 'Ála', albumRef: 'r1' })).toBe(
-      '["provider","nuclear","ala","r1"]',
+  it('keys remote tracks by provider and album reference, else by album name', () => {
+    expect(albumGroupKey({ ...local, provider: 'archive', album: 'Ála', albumRef: 'item-1' })).toBe(
+      '["provider","archive","item-1"]',
+    );
+    expect(
+      albumGroupKey({
+        ...local,
+        provider: 'archive',
+        album: 'Ála',
+        albumArtist: 'X',
+        albumRef: 'i',
+      }),
+    ).toBe('["provider","archive","i"]');
+    expect(albumGroupKey({ ...local, provider: 'archive', album: 'Ála' })).toBe(
+      '["provider","archive","ala"]',
     );
     expect(albumGroupKey({ ...local, provider: 'nuclear', album: 'Ála', albumArtist: 'X' })).toBe(
       '["artist","x","ala"]',

@@ -26,7 +26,12 @@ describe('migration 004 (merged album artist)', () => {
 
   it('shows the album artist only when every track shares it, and forces a rescan', async () => {
     const tracksBefore = await db.getAll('SELECT * FROM tracks ORDER BY id');
-    expect(await migrate(db, MIGRATIONS)).toEqual([4]);
+    expect(
+      await migrate(
+        db,
+        MIGRATIONS.filter((m) => m.version <= 4),
+      ),
+    ).toEqual([4]);
     expect(await db.getAll('SELECT key, artist, various FROM albums ORDER BY key')).toEqual([
       { key: 'k1', artist: 'X', various: 0 },
       { key: 'k2', artist: 'Queen', various: 0 },

@@ -17,6 +17,11 @@ export interface Track {
   addedAt: number | null;
   /** Null when the track has no album tag. */
   albumKey: string | null;
+  /** The provider's album reference: MediaStore album id, or the Internet Archive item. */
+  albumRef: string | null;
+  /** Remote tracks: the licence of the item and who to credit. */
+  licenseUrl: string | null;
+  attribution: string | null;
 }
 
 export interface Album {
@@ -53,7 +58,10 @@ export type AlbumSort = (typeof ALBUM_SORTS)[number];
 export const TRACK_COLUMNS = `t.id, t.provider, t.provider_ref AS providerRef, t.title, t.artist,
   t.album, t.album_artist AS albumArtist, t.track_no AS trackNo, t.disc_no AS discNo,
   t.duration_ms AS durationMs, t.local_path AS localPath, t.year, t.added_at AS addedAt,
-  t.album_key AS albumKey`;
+  t.album_key AS albumKey, t.album_ref AS albumRef, t.license_url AS licenseUrl, t.attribution`;
+
+/** The library is what plays without a network: local files and completed downloads. */
+const IN_LIBRARY = 't.local_path IS NOT NULL';
 
 export const ALBUM_COLUMNS = `a.key, a.name, a.artist, a.various, a.track_count AS trackCount, a.duration_ms AS durationMs,
   a.year, a.sample_path AS samplePath`;
@@ -77,7 +85,9 @@ const ALBUM_ORDER_BY: Record<AlbumSort, string> = {
 };
 
 export function listSongs(db: Db, sort: SongSort): Promise<Track[]> {
-  return db.getAll<Track>(`SELECT ${TRACK_COLUMNS} FROM tracks t ORDER BY ${SONG_ORDER[sort]}`);
+  return db.getAll<Track>(
+    `SELECT ${TRACK_COLUMNS} FROM tracks t WHERE ${IN_LIBRARY} ORDER BY ${SONG_ORDER[sort]}`,
+  );
 }
 
 export function listAlbums(db: Db, sort: AlbumSort): Promise<Album[]> {
@@ -87,7 +97,8 @@ export function listAlbums(db: Db, sort: AlbumSort): Promise<Album[]> {
 /** Year sorting is only offered when at least one album carries a year tag. */
 export async function hasAlbumYears(db: Db): Promise<boolean> {
   const row = await db.getFirst<{ n: number }>(
-    'SELECT COUNT(*) AS n FROM tracks WHERE year IS NOT NULL AND album IS NOT NULL',
+    `SELECT COUNT(*) AS n FROM tracks t
+      WHERE t.year IS NOT NULL AND t.album IS NOT NULL AND ${IN_LIBRARY}`,
   );
   return (row?.n ?? 0) > 0;
 }
@@ -102,7 +113,8 @@ export function getAlbum(db: Db, key: string): Promise<Album | null> {
 
 export function albumTracks(db: Db, key: string): Promise<Track[]> {
   return db.getAll<Track>(
-    `SELECT ${TRACK_COLUMNS} FROM tracks t WHERE t.album_key = ? ORDER BY ${ALBUM_ORDER}, t.id`,
+    `SELECT ${TRACK_COLUMNS} FROM tracks t
+      WHERE t.album_key = ? AND ${IN_LIBRARY} ORDER BY ${ALBUM_ORDER}, t.id`,
     [key],
   );
 }
@@ -115,7 +127,8 @@ export function getArtist(db: Db, name: string): Promise<Artist | null> {
 export function artistAlbums(db: Db, artist: string): Promise<Album[]> {
   return db.getAll<Album>(
     `SELECT ${ALBUM_COLUMNS} FROM albums a
-      WHERE a.key IN (SELECT album_key FROM tracks WHERE artist = ? AND album_key IS NOT NULL)
+      WHERE a.key IN (SELECT t.album_key FROM tracks t
+                       WHERE t.artist = ? AND t.album_key IS NOT NULL AND ${IN_LIBRARY})
       ORDER BY a.year DESC NULLS LAST, a.name_norm`,
     [artist],
   );
@@ -123,7 +136,7 @@ export function artistAlbums(db: Db, artist: string): Promise<Album[]> {
 
 export function artistTracks(db: Db, artist: string): Promise<Track[]> {
   return db.getAll<Track>(
-    `SELECT ${TRACK_COLUMNS} FROM tracks t WHERE t.artist = ?
+    `SELECT ${TRACK_COLUMNS} FROM tracks t WHERE t.artist = ? AND ${IN_LIBRARY}
       ORDER BY t.album_norm NULLS LAST, ${ALBUM_ORDER}, t.id`,
     [artist],
   );

@@ -1,0 +1,168 @@
+{
+  "alternate_locations": {
+    "servers": [{ "server": "dn721904.ca.archive.org", "dir": "/0/items/lph333" }],
+    "workable": [{ "server": "dn721904.ca.archive.org", "dir": "/0/items/lph333" }]
+  },
+  "created": 1792866303,
+  "d1": "dn801306.us.archive.org",
+  "dir": "/0/items/lph333",
+  "files": [
+    {
+      "name": "333.jpg",
+      "source": "original",
+      "mtime": "1739116678",
+      "size": "1407170",
+      "md5": "598654eef49a41a0ff3c7a7b07f1e646",
+      "crc32": "7b5bb9bf",
+      "sha1": "6b2274908e26e901883473c332a1377a7b50d13f",
+      "format": "JPEG"
+    },
+    {
+      "name": "333.mp3",
+      "source": "original",
+      "mtime": "1739116641",
+      "size": "62582281",
+      "md5": "8cf4044f2c69ba433bc9ef84245d9d19",
+      "crc32": "c59d7907",
+      "sha1": "a326e40732988d3df502fde9e27cf2308c93b5d4",
+      "format": "VBR MP3",
+      "length": "2607.57",
+      "track": "01"
+    },
+    {
+      "name": "333.png",
+      "source": "derivative",
+      "format": "PNG",
+      "original": "333.mp3",
+      "mtime": "1739117102",
+      "size": "41579",
+      "md5": "7dc7aac2134107e90fa1a0834270a328",
+      "crc32": "90c76f36",
+      "sha1": "c8300736f9beddd9b043c7a35c02a754e784a959"
+    },
+    {
+      "name": "333_spectrogram.png",
+      "source": "derivative",
+      "format": "Spectrogram",
+      "original": "333.mp3",
+      "mtime": "1739117130",
+      "size": "288768",
+      "md5": "28dc009f669ab67ab7b497e8f7d31836",
+      "crc32": "10f8726f",
+      "sha1": "da750f9820c789f4abc11dcf147a67d11b5c964b"
+    },
+    {
+      "name": "333_thumb.jpg",
+      "source": "derivative",
+      "format": "JPEG Thumb",
+      "original": "333.jpg",
+      "mtime": "1739116969",
+      "size": "16065",
+      "md5": "aa25d2ca4db876a68017ebb86463541f",
+      "crc32": "5b6898fa",
+      "sha1": "96919de7214327f390275d6a33236e211af4f7c8"
+    },
+    {
+      "name": "LPH 333 - Curly Songs (1929-60).png",
+      "source": "derivative",
+      "format": "PNG",
+      "original": "333.mp3",
+      "mtime": "1739116985",
+      "size": "41579",
+      "md5": "cbb7922a588dde539253573d19501d84",
+      "crc32": "3540f5cd",
+      "sha1": "47567523e91e57347769120c196196387115beb3"
+    },
+    {
+      "name": "LPH 333 - Curly Songs (1929-60)_spectrogram.png",
+      "source": "derivative",
+      "format": "Spectrogram",
+      "original": "333.mp3",
+      "mtime": "1739117014",
+      "size": "289018",
+      "md5": "7f844f7c2c41098346cb00180942b1bb",
+      "crc32": "43352a81",
+      "sha1": "debdb6cfb8837733827088f21f562123dd182db8"
+    },
+    {
+      "name": "__ia_thumb.jpg",
+      "source": "original",
+      "mtime": "1739116739",
+      "size": "26228",
+      "md5": "e22a05e62a4dbd326d13f35e668d0751",
+      "crc32": "4e277ea2",
+      "sha1": "bf598217abfcb9515bd7facbc85dad0fd6f40987",
+      "format": "Item Tile"
+    },
+    {
+      "name": "lph333_archive.torrent",
+      "source": "metadata",
+      "btih": "d3e83da3f2f05c5d0f82f3f8cbec99438032a43e",
+      "mtime": "1789188392",
+      "size": "5271",
+      "md5": "7214d1c5cf022ee4899dbfe6c3a91d61",
+      "crc32": "47aef28d",
+      "sha1": "e038c4eb674646ead55862ce3c43590e21cb5a09",
+      "format": "Archive BitTorrent"
+    },
+    {
+      "name": "lph333_files.xml",
+      "source": "original",
+      "format": "Metadata",
+      "md5": "40c6fe38e82f4fcb22b1b694cea4884e",
+      "summation": "md5"
+    },
+    {
+      "name": "lph333_meta.sqlite",
+      "source": "original",
+      "mtime": "1739116704",
+      "size": "20480",
+      "md5": "fdbaa4ebc6346ba99210218a4f7cecf2",
+      "crc32": "4e06644b",
+      "sha1": "5aedc1e818f0e69610fa50a589591e4138dd992e",
+      "format": "Metadata"
+    },
+    {
+      "name": "lph333_meta.xml",
+      "source": "original",
+      "mtime": "1789188391",
+      "size": "1826",
+      "md5": "91d298caaf6ae42822e4bca8a27b88df",
+      "crc32": "d882c49f",
+      "sha1": "5fbf79d2f2fd0fb0c2297ff8991b3b9dc0457c99",
+      "format": "Metadata"
+    }
+  ],
+  "files_count": 12,
+  "item_last_updated": 1789188392,
+  "item_size": 64720265,
+  "metadata": {
+    "identifier": "lph333",
+    "mediatype": "audio",
+    "creator": "Orang Lucky",
+    "date": "2020-01-30",
+    "description": "A genre-free mix of music.",
+    "scanner": "Internet Archive HTML5 Uploader 1.7.0",
+    "subject": ["music", "mix"],
+    "title": "LPH 333 - Curly Songs (1929-60)",
+    "uploader": "oranglucky@gmx.net",
+    "publicdate": "2025-02-09 15:57:55",
+    "addeddate": "2025-02-09 15:57:55",
+    "curation": "[curator]validator@archive.org[/curator][date]20250209155916[/date][comment]checked for malware[/comment]",
+    "notes": "tracklist:\n\n(1929) Sleepy John Estes - The Girl I Love, She Got Long Curly Hair\n(1930) Marc Williams 'The Cowboy Crooner' - Curly Joe\n(1932) Paul Robeson - Ma Curly-Headed Baby\n(1934) Callahan Brothers - She's My Curly Headed Baby\n(1935) Riley Puckett - Curly-Headed Baby\n(1939) Vasilis Tsitsanis + Stratos Payioumtzis - To katsaro sou to malli (Your Curly Hair)\n(1940) Fats Waller + His Rhythm - Little Curly Hair in a High Chair\n(1949) Arthur Askey - Ev'ry Little Piggy's Got a Curly Tail\n(1949) James Moody Quartet - Curly Top Blues\n(1952) Big Bill Broonzy - Coal Black Curly Hair\n(1952) Roy 'Bald Head' Byrd (aka Professor Longhair) - Curly Haired Baby\n(1955) The Sons of the Pioneers - Curly Joe from Idaho\n(1958) Ensemble Piatnitsky + Balalaikas - Curly Head\n(1958) Ted Heath + His Music - Ma Curly Headed Baby Cha Cha\n(1960) Theodore Bikel - Chupchik (Curly Forelock)\n\ntotal time: 43'27\n\n\nCurled by Lucky.\nCover by Lucky.\nDedicated to my curly baby.",
+    "collection_added": ["hifidelity", "folksoundomy"],
+    "collection": ["lucky-psychic-hut", "folksoundomy"]
+  },
+  "server": "dn801306.us.archive.org",
+  "simplelists": {
+    "solo_manifest": {
+      "solo_manifest_dn801306": {
+        "sys_changed_by": { "source": "task", "task_id": "5695077052" },
+        "sys_last_changed": "2026-10-09 19:00:08.249162"
+      }
+    }
+  },
+  "solo": true,
+  "uniq": 1677594765,
+  "workable_servers": ["dn801306.us.archive.org"]
+}

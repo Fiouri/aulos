@@ -1,0 +1,132 @@
+{
+  "alternate_locations": {
+    "servers": [{ "server": "dn721606.ca.archive.org", "dir": "/0/items/baltsa-from-greece" }],
+    "workable": [{ "server": "dn721606.ca.archive.org", "dir": "/0/items/baltsa-from-greece" }]
+  },
+  "created": 1792865932,
+  "d1": "dn601703.us.archive.org",
+  "dir": "/0/items/baltsa-from-greece",
+  "files": [
+    {
+      "name": "Baltsa-Greece.rar",
+      "source": "original",
+      "mtime": "1668147685",
+      "size": "236610491",
+      "md5": "a05ec476ca064fa0e98727390645aee8",
+      "crc32": "55accf02",
+      "sha1": "4403010a15f2842952eaa1813b74fb3b6785c393",
+      "format": "Flac",
+      "title": "Agnes Baltsa",
+      "length": "0",
+      "filecount": "18"
+    },
+    {
+      "name": "Image_1.jpg",
+      "source": "original",
+      "mtime": "1668100325",
+      "size": "295852",
+      "md5": "f141b0f9286476f47b38794f2065de3f",
+      "crc32": "9ea8da10",
+      "sha1": "f18a3d716b064c88f4230853f3ab2c6a864f1582",
+      "format": "JPEG",
+      "rotation": "0",
+      "title": "Agnes Baltsa"
+    },
+    {
+      "name": "Image_1_thumb.jpg",
+      "source": "derivative",
+      "format": "JPEG Thumb",
+      "original": "Image_1.jpg",
+      "mtime": "1668100417",
+      "size": "12068",
+      "md5": "bcbb87d641141ae8177bd0008e96917a",
+      "crc32": "71997bce",
+      "sha1": "6f8bf1ac490140de9f6efaf85d4346950b4067f0"
+    },
+    {
+      "name": "__ia_thumb.jpg",
+      "source": "original",
+      "mtime": "1668100379",
+      "size": "17504",
+      "md5": "fa9d36c66cbca9886a9b3cc3c602892e",
+      "crc32": "2e660c44",
+      "sha1": "9142a94417dc30a83c8bd04d0a26e5b0bd4eadeb",
+      "format": "Item Tile",
+      "rotation": "0",
+      "title": "Agnes Baltsa"
+    },
+    {
+      "name": "baltsa-from-greece_archive.torrent",
+      "source": "metadata",
+      "btih": "8c910d2ed37fe81ea602ea349e32b1e68c236bab",
+      "mtime": "1682075710",
+      "size": "11206",
+      "md5": "299b28890c3f615b1e65fd14459d6542",
+      "crc32": "b03c1112",
+      "sha1": "390ccb15ec3ea700f2f0a2d27fa3c9abcbd8fcd7",
+      "format": "Archive BitTorrent"
+    },
+    {
+      "name": "baltsa-from-greece_files.xml",
+      "source": "original",
+      "format": "Metadata",
+      "md5": "3208aa59918543bef8667d0d7a1144fd",
+      "summation": "md5",
+      "title": "Agnes Baltsa"
+    },
+    {
+      "name": "baltsa-from-greece_meta.sqlite",
+      "source": "original",
+      "mtime": "1668147692",
+      "size": "28672",
+      "md5": "badae6181537cc1ea918c9e05edb2fbd",
+      "crc32": "302f0274",
+      "sha1": "4c98a604d07c2a6e51999fb414616a29650d9498",
+      "format": "Metadata",
+      "title": "Agnes Baltsa"
+    },
+    {
+      "name": "baltsa-from-greece_meta.xml",
+      "source": "original",
+      "mtime": "1682075708",
+      "size": "1896",
+      "md5": "c8a252a48b401a63703bc64de1315464",
+      "crc32": "c027af67",
+      "sha1": "d103a7ba87b934f2d476f3a1b934b797bd938168",
+      "format": "Metadata",
+      "title": "Agnes Baltsa"
+    }
+  ],
+  "files_count": 8,
+  "item_last_updated": 1682075710,
+  "item_size": 236977689,
+  "metadata": {
+    "identifier": "baltsa-from-greece",
+    "mediatype": "audio",
+    "creator": "Agnes Baltsa",
+    "date": "1985",
+    "description": "<div><i>Agnes Baltsa sings Greek Songs</i></div><div><br /></div><div>Manos Hadjidakis:</div><div>1. Garifallo St'afti 3:10</div><div>2. Oniro Pedion Tis Gitonias 5:07</div><div>3. O Tahidromos 4:43</div><div>Mikis Michel Theodorakis:</div><div>4. Mera Magiou 5:01</div><div>5. To Treno Fevgi Stis Okto 3:57</div><div>6. Se Potisa Rodostamo 4:44</div><div>Stavros Xarhakos:\u00a0</div><div>7. Stou Othona Ta Hronia 4:15</div><div>8. Aspri Mera Ke Ya Mas 3:51</div><div>9. Varkarolla 3:58</div><div>10. Ta Trena Pou Figan 4:04</div><div>Vasilis Tsitsanis:</div><div>11. Arhontissa (Princess of my heart) 4:12</div><div><br /></div><div>Agnes Baltsa, mezzo\u00a0</div><div>Athens Experimental Orchestra,</div><div>Conductor: Stavros Xarhakos</div><div>rec. Athens, Polysound Studio, November, 1985</div><div><br /></div><div>*************</div>",
+    "language": "gre",
+    "scanner": "Internet Archive HTML5 Uploader 1.7.0",
+    "subject": "Agnes Baltsa; Stavros Xarhakos",
+    "title": "Agnes Baltsa: From Greece with Love 1985",
+    "uploader": "koncordia11@gmail.com",
+    "publicdate": "2022-11-10 17:12:32",
+    "addeddate": "2022-11-10 17:12:32",
+    "curation": "[curator]validator@archive.org[/curator][date]20221110171308[/date][comment]checked for malware[/comment]",
+    "year": "1985",
+    "collection": "audio_music"
+  },
+  "server": "dn601703.us.archive.org",
+  "simplelists": {
+    "solo_manifest": {
+      "solo_manifest_dn601703": {
+        "sys_changed_by": { "source": "task", "task_id": "5609256846" },
+        "sys_last_changed": "2026-09-06 09:40:24.48428"
+      }
+    }
+  },
+  "solo": true,
+  "uniq": 1385363815,
+  "workable_servers": ["dn601703.us.archive.org"]
+}

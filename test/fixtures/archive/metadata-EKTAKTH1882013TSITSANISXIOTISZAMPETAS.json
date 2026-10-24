@@ -1,0 +1,141 @@
+{
+  "alternate_locations": {
+    "servers": [
+      {
+        "server": "dn711207.ca.archive.org",
+        "dir": "/0/items/EKTAKTH1882013TSITSANISXIOTISZAMPETAS"
+      }
+    ],
+    "workable": [
+      {
+        "server": "dn711207.ca.archive.org",
+        "dir": "/0/items/EKTAKTH1882013TSITSANISXIOTISZAMPETAS"
+      }
+    ]
+  },
+  "created": 1792866308,
+  "d1": "ia600805.us.archive.org",
+  "d2": "ia800805.us.archive.org",
+  "dir": "/7/items/EKTAKTH1882013TSITSANISXIOTISZAMPETAS",
+  "files": [
+    {
+      "name": "EKTAKTH 18-8-2013 TSITSANIS-XIOTIS-ZAMPETAS.mp3",
+      "source": "original",
+      "format": "VBR MP3",
+      "length": "11726.96",
+      "height": "0",
+      "width": "0",
+      "mtime": "1395327800",
+      "size": "140723548",
+      "md5": "a8f1becafd8a4503042068a50df328e3",
+      "crc32": "96d703fd",
+      "sha1": "1966fe23bf7f86bec990fd15d147580e9d1af099",
+      "external-identifier": "urn:acoustid:unknown"
+    },
+    {
+      "name": "EKTAKTH 18-8-2013 TSITSANIS-XIOTIS-ZAMPETAS.ogg",
+      "source": "derivative",
+      "format": "Ogg Vorbis",
+      "original": "EKTAKTH 18-8-2013 TSITSANIS-XIOTIS-ZAMPETAS.mp3",
+      "mtime": "1417869434",
+      "size": "115557019",
+      "md5": "e7908d1f2b6bd094756e745c418f36bb",
+      "crc32": "40f6ae3a",
+      "sha1": "07a752fe9d07836f8461054f419054109c341d74",
+      "length": "11744.55",
+      "height": "0",
+      "width": "0"
+    },
+    {
+      "name": "EKTAKTH 18-8-2013 TSITSANIS-XIOTIS-ZAMPETAS.png",
+      "source": "derivative",
+      "format": "PNG",
+      "original": "EKTAKTH 18-8-2013 TSITSANIS-XIOTIS-ZAMPETAS.mp3",
+      "mtime": "1417870010",
+      "size": "10986",
+      "md5": "311295c95b51a302fefbbfe29666f7ff",
+      "crc32": "15a2cac1",
+      "sha1": "3f1bbf39089629e6bb4fa1c3490020bb7ceaa41e"
+    },
+    {
+      "name": "EKTAKTH 18-8-2013 TSITSANIS-XIOTIS-ZAMPETAS_spectrogram.png",
+      "source": "derivative",
+      "format": "Spectrogram",
+      "original": "EKTAKTH 18-8-2013 TSITSANIS-XIOTIS-ZAMPETAS.mp3",
+      "mtime": "1417870130",
+      "size": "222652",
+      "md5": "7305bd4f6fca5f14958c7f29cbed065a",
+      "crc32": "0dddeb6f",
+      "sha1": "1e9d443247873fda4bf0dac7cb51925974451413"
+    },
+    {
+      "name": "EKTAKTH1882013TSITSANISXIOTISZAMPETAS_archive.torrent",
+      "source": "metadata",
+      "btih": "a7628d903d257db4ea40f5d0b9ed8d2c77b54552",
+      "mtime": "1613318771",
+      "size": "12444",
+      "md5": "a3c9eac4cacc4b3552ca2b4c4f064dd7",
+      "crc32": "69bfa1c6",
+      "sha1": "2e0f7dc832bb31e6833d7143c5ee96ac4a671165",
+      "format": "Archive BitTorrent"
+    },
+    {
+      "name": "EKTAKTH1882013TSITSANISXIOTISZAMPETAS_files.xml",
+      "source": "original",
+      "format": "Metadata",
+      "md5": "776128e244251fc3a3be6693ff7567b8",
+      "summation": "md5"
+    },
+    {
+      "name": "EKTAKTH1882013TSITSANISXIOTISZAMPETAS_meta.sqlite",
+      "source": "original",
+      "format": "Metadata",
+      "mtime": "1395327817",
+      "size": "9216",
+      "md5": "d0af30235395c1bbb47d8dcc79ff8f6e",
+      "crc32": "e78f51b6",
+      "sha1": "27679ac21228afe59b82c82cb2a4bd7e396da8b1"
+    },
+    {
+      "name": "EKTAKTH1882013TSITSANISXIOTISZAMPETAS_meta.xml",
+      "source": "original",
+      "format": "Metadata",
+      "mtime": "1613318768",
+      "size": "807",
+      "md5": "64adb2f1838effefe95cb38430c777e9",
+      "crc32": "5f302e49",
+      "sha1": "762e67c799c1e3287a5b1af6f51bb2658234a050"
+    },
+    {
+      "name": "__ia_thumb.jpg",
+      "source": "original",
+      "mtime": "1613318768",
+      "size": "3568",
+      "md5": "98ff3d6f4b8b76a5b67bbc1efa9ad186",
+      "crc32": "90ffd989",
+      "sha1": "1f6a0aff04870734f27312800dcb488087eaa2b6",
+      "format": "Item Tile",
+      "rotation": "0"
+    }
+  ],
+  "files_count": 9,
+  "item_last_updated": 1689567637,
+  "item_size": 256540240,
+  "metadata": {
+    "identifier": "EKTAKTH1882013TSITSANISXIOTISZAMPETAS",
+    "mediatype": "audio",
+    "collection": ["opensource_audio", "community"],
+    "description": "SKONISMENA DIAMANTIA EKTAKTH EKPOMPH",
+    "scanner": "Internet Archive HTML5 Uploader 1.5.2",
+    "subject": ["mary_omikron", "musicheaven"],
+    "title": "EKTAKTH 18 8 2013 TSITSANIS XIOTIS ZAMPETAS",
+    "publicdate": "2014-03-20 15:03:21",
+    "uploader": "mary_omikron@yahoo.gr",
+    "addeddate": "2014-03-20 15:03:21",
+    "curation": "[curator]validator@archive.org[/curator][date]20140512205432[/date][comment]checked for malware[/comment]",
+    "backup_location": "ia905805_24"
+  },
+  "server": "ia800805.us.archive.org",
+  "uniq": 1700234097,
+  "workable_servers": ["ia800805.us.archive.org", "ia600805.us.archive.org"]
+}

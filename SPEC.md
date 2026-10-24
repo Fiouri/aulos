@@ -12,6 +12,7 @@ Binding copy for implementation. Discussion copy: Claude Doc "Android Music App 
 | YouTube (`full` flavour) | Not in v1; planned for v1.1 after the `clean` build is stable |
 | Upstream Nuclear PR (read endpoints + pairing token) | Opened during M3 |
 | Languages | English only in v1; all UI strings go through i18n so a translation can be added later without code changes |
+| Jamendo | Deferred (2026-10-24): not in v1; may be added later as another provider |
 
 ## 1. Summary and goals
 
@@ -38,7 +39,7 @@ Success targets (confirm during M1):
 | Library | Scan chosen folders; MP3, FLAC, M4A/AAC, OGG, OPUS; tags and embedded artwork | Cloud libraries, tag editing |
 | Playback | Queue, shuffle, repeat, gapless, background playback, media notification, Bluetooth and lock-screen controls, sleep timer | Equalizer, crossfade, Chromecast/DLNA, Android Auto |
 | Collections | Playlists, favorites (tracks, albums, artists), listening history; JSON import/export | Smart playlists, recommendations |
-| Sources | Provider interface; Local, Internet Archive, Jamendo | Running Nuclear's JS plugins unchanged |
+| Sources | Provider interface; Local, Internet Archive | Jamendo (deferred), running Nuclear's JS plugins unchanged |
 | Offline | Download a track, album or playlist from a provider; storage limit and cleanup | Background sync of new releases |
 | Nuclear pairing | Remote-control the PC player; import playlists and favorites from the PC | Two-way live sync, playing PC audio on the phone |
 | UI | English; light and dark themes | Translations, custom theme editor |
@@ -55,7 +56,7 @@ UI (expo-router screens: library, search, now playing, playlists, downloads, PC 
         ├─> Player        expo-audio playlist, gapless, media controls ──> Android media session / foreground service
         ├─> Library scan  Kotlin Expo module over Android MediaStore ──> SQLite
         ├─> Downloads     expo-file-system, resume, storage limit    ──> SQLite
-        ├─> Providers     local, archive, jamendo (youtube: full only) ──HTTPS──> Internet Archive, Jamendo
+        ├─> Providers     local, archive (youtube: full only, v1.1) ──HTTPS──> Internet Archive
         └─> Nuclear link  Jam API client, pairing by QR, SSE           ──HTTP/SSE──> Nuclear on the PC (port 4120–4129)
 SQLite (expo-sqlite): tracks, playlists, favorites, downloads, history, pairings, kv
 ```
@@ -79,7 +80,7 @@ src/
   stores/             zustand: player, library, settings
   player/             expo-audio wrapper, queue, play counter
   library/            scanner service, artwork cache
-  providers/          SourceProvider interface; local, archive, jamendo
+  providers/          SourceProvider interface; local, archive
   providers-youtube/  full flavour only; excluded from clean builds at bundle time (v1.1)
   downloads/          queue, resume, storage limit
   nuclear/            Jam API client, SSE, pairing
@@ -103,7 +104,7 @@ interface SourceProvider {
 | --- | --- | --- | --- | --- |
 | Local files | All | The device library, fully offline | None | The user's own files |
 | Internet Archive | All | Search, stream, download of public audio collections | No key | Mostly public domain or CC; per item |
-| Jamendo | All | Search, stream, download of independent music | `client_id`; non-commercial tier 35,000 requests/month, so each user enters their own key | CC licences, per track |
+| Jamendo (deferred, not in v1) | — | Search, stream, download of independent music | `client_id`; non-commercial tier 35,000 requests/month, so each user would enter their own key | CC licences, per track |
 | YouTube (youtubei.js, MIT) | `full` only (v1.1) | Search and stream; download | None; breaks when YouTube changes | Copyrighted; against YouTube's terms |
 
 Not in v1: SoundCloud (API keys need a paid Artist Pro subscription), Spotify (no audio access for third-party players). NewPipeExtractor (GPL-3.0, Java) is not used.
@@ -142,10 +143,11 @@ One SQLite database holds everything durable; Zustand holds only UI and player s
 | `downloads` | `track_id` PK, `status`, `bytes_done`, `bytes_total`, `error`, `updated_at` | Download queue and resume |
 | `history` | `id` PK, `track_id`, `played_at`, `ms_played` | A play counts after 30 s or half the track |
 | `pairings` | `id` PK, `name`, `base_url`, `last_seen_at` | Paired Nuclear desktops |
-| `kv` | `key` PK, `value` (JSON) | Settings and provider keys (Jamendo `client_id`) |
+| `kv` | `key` PK, `value` (JSON) | Settings |
+| `http_cache` | `key` PK (provider + normalised request), `body` (JSON), `fetched_at`, `ttl_s` | Provider response cache (M2) |
 | `schema_migrations` | `version` PK, `applied_at` | Forward-only migrations |
 
-Albums and artists are SQL views over `tracks`. Nothing secret ships in the APK or the repo.
+Albums and artists are SQL views over `tracks`. Remote tracks (M2) also store `license_url` and `attribution`, and are written to `tracks` only when the user queues, saves, favourites or downloads them, not for every search result. Nothing secret ships in the APK or the repo.
 
 ## 7. Licensing, distribution and risks
 
@@ -153,7 +155,7 @@ The app copies no Nuclear code (it only calls Nuclear's HTTP API), so AGPL does 
 
 | Flavour | Providers | Channel | Signing |
 | --- | --- | --- | --- |
-| `clean` | Local, Internet Archive, Jamendo | GitHub Releases, F-Droid; Play Store possible later | Own release keystore, kept outside the repo with an offline backup |
+| `clean` | Local, Internet Archive | GitHub Releases, F-Droid; Play Store possible later | Own release keystore, kept outside the repo with an offline backup |
 | `full` (v1.1) | `clean` + YouTube | GitHub Releases only (F-Droid only with the NonFreeNet anti-feature) | Same keystore, `applicationId` `com.anywecon.aulos.full` |
 
 Every release ships the APK and its SHA-256 checksum, built locally with `gradlew assembleRelease`.
@@ -165,7 +167,6 @@ Every release ships the APK and its SHA-256 checksum, built locally with `gradle
 | Play copyright policy bans unauthorised download apps | `full` can never be listed | Only `clean` is a store candidate |
 | Jam API has no authentication | Anyone on the same network controls the PC player | Warn in pairing UI; upstream token PR; Windows firewall: allow Nuclear on Private networks only |
 | OEM battery killers stop background audio | Playback stops with screen off | Media foreground service via lock-screen controls; one-time battery-optimisation prompt |
-| Jamendo request cap on a non-commercial key | A shared key would run out | Each user enters their own key |
 | Play personal accounts need 12 testers for 14 days | Delay before a `clean` listing | Not needed for v1; recheck rule before any store plan |
 
 ## 8. Milestones and verification gate
@@ -176,7 +177,7 @@ None starts until the previous gate passes on a real phone.
 | --- | --- | --- |
 | M0 Foundation | Expo SDK 58 project, TS strict, lint, Jest; SQLite schema and migrations; Kotlin MediaStore module; i18n scaffolding | Release APK builds locally with Gradle; typecheck, lint and tests pass with 0 warnings; app starts on a real phone and shows the scanned track count |
 | M1 Offline player | Library browse, queue, gapless, background; lock screen, Bluetooth, sleep timer; playlists, favorites, history; FTS search that ignores accents (Greek tonos included); R8 minify and resource shrinking on release | 2,000-track scan under 30 s; 1 h screen-off playback with no stop; cold start under 2 s; all Maestro flows pass on the S23 and on an API 31 emulator |
-| M2 Sources and downloads | SourceProvider interface; Internet Archive and Jamendo; downloads with resume and storage limit | Search, stream and download a track, then play it in airplane mode; provider tests use recorded HTTP fixtures |
+| M2 Sources and downloads | SourceProvider interface; Internet Archive; downloads with resume and storage limit | Search, stream and download a track, then play it in airplane mode; provider tests use recorded HTTP fixtures |
 | M3 Nuclear pairing | QR pairing, live remote over SSE; send search results to the PC queue; import Nuclear JSON playlists | Control the PC over LAN and Tailscale; an imported playlist plays on the phone; upstream PR opened |
 | M4 Release | English UI; ABI splits; `clean` flavour; signed APK and SHA-256 on GitHub Releases | 7 days of daily use with zero crashes; fresh install test on a second phone; F-Droid metadata ready |
 

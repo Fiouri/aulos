@@ -29,7 +29,8 @@ export function searchSongs(db: Db, query: string, limit: number): Promise<Track
   if (match === null) return Promise.resolve([]);
   return db.getAll<Track>(
     `SELECT ${TRACK_COLUMNS} FROM tracks_fts f JOIN tracks t ON t.id = f.rowid
-      WHERE tracks_fts MATCH ? ORDER BY f.rank, t.title_norm LIMIT ?`,
+      WHERE tracks_fts MATCH ? AND t.local_path IS NOT NULL
+      ORDER BY f.rank, t.title_norm LIMIT ?`,
     [match, limit],
   );
 }

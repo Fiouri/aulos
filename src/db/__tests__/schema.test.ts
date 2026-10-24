@@ -18,8 +18,8 @@ const insertTrack = (
 ) =>
   db.run(
     `INSERT INTO tracks (provider, provider_ref, title, artist, album, title_norm, artist_norm,
-                         album_norm, album_key)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+                         album_norm, album_key, local_path)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     [
       provider,
       ref,
@@ -30,6 +30,7 @@ const insertTrack = (
       normalizeNullable(artist),
       normalizeNullable(album),
       albumGroupKey({ provider, album, albumArtist: null, albumRef: null, folder: 'Music/' }),
+      `content://media/external/audio/media/${ref}`,
     ],
   );
 
@@ -61,6 +62,7 @@ describe('schema', () => {
       { name: 'downloads', type: 'table' },
       { name: 'favorites', type: 'table' },
       { name: 'history', type: 'table' },
+      { name: 'http_cache', type: 'table' },
       { name: 'kv', type: 'table' },
       { name: 'pairings', type: 'table' },
       { name: 'playlist_items', type: 'table' },

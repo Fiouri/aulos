@@ -1,0 +1,64 @@
+{
+  "responseHeader": {
+    "status": 0,
+    "QTime": 219,
+    "params": {
+      "query": "(text:tsitsanis OR text:tsitsanis OR text__reviews:tsitsanis) AND mediatype:audio AND format:(&quot;VBR MP3&quot; OR &quot;MP3&quot;)",
+      "qin": "(tsitsanis) AND mediatype:(audio) AND format:(&quot;VBR MP3&quot; OR &quot;MP3&quot;)",
+      "fields": "identifier,title,creator,year,licenseurl",
+      "wt": "json",
+      "rows": 20,
+      "start": 0
+    }
+  },
+  "response": {
+    "numFound": 8,
+    "start": 0,
+    "docs": [
+      {
+        "creator": "Orang Lucky",
+        "identifier": "lph333",
+        "title": "LPH 333 - Curly Songs (1929-60)",
+        "year": 2020
+      },
+      {
+        "creator": "Ioanna Georgakopoulou and Vassilis Tsitsanis",
+        "identifier": "IGeorgakopoulouBTsitsanisIGerakinaCa1940",
+        "title": "Ioanna Georgakopoulou and Vassilis Tsitsanis - I Gerakina",
+        "year": 1940
+      },
+      {
+        "identifier": "EKTAKTH1882013TSITSANISXIOTISZAMPETAS",
+        "title": "EKTAKTH 18 8 2013 TSITSANIS XIOTIS ZAMPETAS"
+      },
+      {
+        "creator": "Kutay Derin Kugay",
+        "identifier": "music-of-the-world-istanbul-may-3-2025",
+        "title": "Music Of The World Istanbul May 3 2025",
+        "year": 2025
+      },
+      {
+        "identifier": "EKTAKTH1882013TSITSANISXIOTISZAMPETASKORAKAKIS",
+        "title": "EKTAKTH 18 8 2013 TSITSANIS XIOTIS ZAMPETAS KORAKAKIS"
+      },
+      {
+        "creator": "Kutay Derin Kugay",
+        "identifier": "music-of-the-world-istanbul-feb-10-2024",
+        "title": "Music Of The World Istanbul Feb 10 2024",
+        "year": 2024
+      },
+      {
+        "creator": "Bajo la bruma radio",
+        "identifier": "equilibristasdelastresparesdecuerdas",
+        "licenseurl": "http://creativecommons.org/publicdomain/mark/1.0/",
+        "title": "Ep2 : Equilibristas De Las Tres Pares De Cuerdas"
+      },
+      {
+        "creator": "Erc\u00fcment G\u00fcr\u00e7ay",
+        "identifier": "babilden-sonra-24.07.2023-01",
+        "title": "323- Solon Lekkas (1946- 2020) Hayat\u0131m boyunca \u015fark\u0131 s\u00f6yledim ve dans ettim\" 24 Temmuz 2023",
+        "year": 2023
+      }
+    ]
+  }
+}

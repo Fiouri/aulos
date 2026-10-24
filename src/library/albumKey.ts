@@ -14,20 +14,24 @@ export interface AlbumKeyFields {
 
 /**
  * Identity of the album a track belongs to, stored as tracks.album_key. Tracks without an album
- * tag have none. With an album artist tag: album artist and album name, so a compilation stays
- * one album whatever its track artists. Without one, a local track groups by MediaStore album id
- * (album name and folder on Android), falling back to album name and folder; other providers use
- * the album name and their own album reference. Featured artists therefore never split an album,
- * and two albums sharing a name in different folders stay apart.
+ * tag have none. A remote track with an album reference groups by provider and that reference
+ * (an Internet Archive item is one album). Otherwise, with an album artist tag: album artist and
+ * album name, so a compilation stays one album whatever its track artists. Without one, a local
+ * track groups by MediaStore album id (album name and folder on Android), falling back to album
+ * name and folder; a remote track without a reference uses provider and album name. Featured
+ * artists therefore never split an album, and two albums sharing a name in different folders
+ * stay apart.
  */
 export function albumGroupKey(track: AlbumKeyFields): string | null {
   const album = normalizeNullable(track.album);
   if (album === null) return null;
+  const remote = track.provider !== LOCAL_PROVIDER;
+  if (remote && track.albumRef !== null) {
+    return JSON.stringify(['provider', track.provider, track.albumRef]);
+  }
   const albumArtist = normalizeNullable(track.albumArtist);
   if (albumArtist !== null) return JSON.stringify(['artist', albumArtist, album]);
-  if (track.provider !== LOCAL_PROVIDER) {
-    return JSON.stringify(['provider', track.provider, album, track.albumRef]);
-  }
+  if (remote) return JSON.stringify(['provider', track.provider, album]);
   if (track.albumRef !== null) return JSON.stringify(['local', track.albumRef]);
   return JSON.stringify(['folder', album, track.folder]);
 }

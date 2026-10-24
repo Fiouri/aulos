@@ -1,0 +1,28 @@
+{
+  "responseHeader": {
+    "status": 0,
+    "QTime": 228,
+    "params": {
+      "query": "((text:cosmic OR text:cosmic OR text__reviews:cosmic) AND (text:voyager OR text:voyager OR text__reviews:voyager) AND (text:exalot OR text:exalot OR text__reviews:exalot)) AND mediatype:audio AND format:(&quot;VBR MP3&quot; OR &quot;MP3&quot;)",
+      "qin": "(cosmic AND voyager AND exalot) AND mediatype:(audio) AND format:(&quot;VBR MP3&quot; OR &quot;MP3&quot;)",
+      "fields": "identifier,title,creator,year,licenseurl",
+      "wt": "json",
+      "rows": 20,
+      "start": 0
+    }
+  },
+  "response": {
+    "numFound": 2,
+    "start": 0,
+    "docs": [
+      { "identifier": "intergalactic-space-mix", "title": "Intergalactic: Space Mix" },
+      {
+        "creator": "Exalot",
+        "identifier": "exalot-cosmic-voyager",
+        "licenseurl": "http://creativecommons.org/licenses/by-sa/3.0/",
+        "title": "Exalot - Cosmic Voyager [USC-WR-1311.0188]",
+        "year": 2013
+      }
+    ]
+  }
+}

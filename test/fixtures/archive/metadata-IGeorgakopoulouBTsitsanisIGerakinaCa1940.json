@@ -1,0 +1,194 @@
+{
+  "alternate_locations": {
+    "servers": [
+      {
+        "server": "dn721701.ca.archive.org",
+        "dir": "/0/items/IGeorgakopoulouBTsitsanisIGerakinaCa1940"
+      }
+    ],
+    "workable": [
+      {
+        "server": "dn721701.ca.archive.org",
+        "dir": "/0/items/IGeorgakopoulouBTsitsanisIGerakinaCa1940"
+      }
+    ]
+  },
+  "created": 1792865944,
+  "d1": "dn601703.us.archive.org",
+  "dir": "/0/items/IGeorgakopoulouBTsitsanisIGerakinaCa1940",
+  "files": [
+    {
+      "name": "IGeorgakopoulouBTsitsanisIGerakinaCa1940_archive.torrent",
+      "source": "metadata",
+      "btih": "adbb225c8c8402dccdbc2c7640ab8e065854d6cf",
+      "mtime": "1535001029",
+      "size": "4624",
+      "md5": "0e07a350c4ec7b4f16c62c826bdab6f0",
+      "crc32": "d3982381",
+      "sha1": "3443a53942f3c5c9e5792f333c2948b7d8634b2d",
+      "format": "Archive BitTorrent"
+    },
+    {
+      "name": "IGeorgakopoulouBTsitsanisIGerakinaCa1940_files.xml",
+      "source": "metadata",
+      "format": "Metadata",
+      "md5": "c4ad747e30d35673996ef6fcb10c53e1",
+      "summation": "md5"
+    },
+    {
+      "name": "IGeorgakopoulouBTsitsanisIGerakinaCa1940_meta.sqlite",
+      "source": "original",
+      "mtime": "1487387053",
+      "size": "11264",
+      "md5": "c0c83383c1d57a44764384e24c45b587",
+      "crc32": "549b1161",
+      "sha1": "7981aafabcea03caad28f1fe0b9563e6074664b1",
+      "format": "Metadata"
+    },
+    {
+      "name": "IGeorgakopoulouBTsitsanisIGerakinaCa1940_meta.xml",
+      "source": "metadata",
+      "mtime": "1535001027",
+      "size": "1321",
+      "format": "Metadata",
+      "md5": "4bb055a9a24acbfe9277ad335c0e9a9a",
+      "crc32": "e351ae34",
+      "sha1": "b07100bae4f591737a89456b801cb4bd24ed1770"
+    },
+    {
+      "name": "I_Georgakopoulou_B_Tsitsanis-I_Gerakina-ca1940.afpk",
+      "source": "derivative",
+      "format": "Columbia Peaks",
+      "original": "I_Georgakopoulou_B_Tsitsanis-I_Gerakina-ca1940.wav",
+      "mtime": "1487387105",
+      "size": "43728",
+      "md5": "d5902ca25eea6f6869077e6c932d7c9a",
+      "crc32": "be2991c2",
+      "sha1": "7e3c2d5a0772341cd5f1c8c11b83572177d0ca47"
+    },
+    {
+      "name": "I_Georgakopoulou_B_Tsitsanis-I_Gerakina-ca1940.flac",
+      "source": "derivative",
+      "format": "Flac",
+      "original": "I_Georgakopoulou_B_Tsitsanis-I_Gerakina-ca1940.wav",
+      "mtime": "1487387082",
+      "size": "11534271",
+      "md5": "95ed833dca23be730b09f3a918d6be14",
+      "crc32": "4b0a8184",
+      "sha1": "8cdf9f76c8136b0c08b8332e89519098cffb1375",
+      "length": "200.28",
+      "height": "0",
+      "width": "0"
+    },
+    {
+      "name": "I_Georgakopoulou_B_Tsitsanis-I_Gerakina-ca1940.mp3",
+      "source": "derivative",
+      "bitrate": "114",
+      "length": "03:20",
+      "format": "VBR MP3",
+      "original": "I_Georgakopoulou_B_Tsitsanis-I_Gerakina-ca1940.wav",
+      "mtime": "1487387073",
+      "size": "2862080",
+      "md5": "77e8895bf7006b69de08de427f246fd1",
+      "crc32": "5557a6a9",
+      "sha1": "a964867317c613d77a2a5660608c7bf8048cc154",
+      "height": "0",
+      "width": "0"
+    },
+    {
+      "name": "I_Georgakopoulou_B_Tsitsanis-I_Gerakina-ca1940.ogg",
+      "source": "derivative",
+      "format": "Ogg Vorbis",
+      "original": "I_Georgakopoulou_B_Tsitsanis-I_Gerakina-ca1940.wav",
+      "mtime": "1487387081",
+      "size": "1790600",
+      "md5": "1b468f1b082a1dc75f0189ded81ab44e",
+      "crc32": "9dd41e38",
+      "sha1": "60fa538fc6d8c808127261a297538e30d96442e1",
+      "length": "200.28",
+      "height": "0",
+      "width": "0"
+    },
+    {
+      "name": "I_Georgakopoulou_B_Tsitsanis-I_Gerakina-ca1940.png",
+      "source": "derivative",
+      "format": "PNG",
+      "original": "I_Georgakopoulou_B_Tsitsanis-I_Gerakina-ca1940.wav",
+      "mtime": "1487387095",
+      "size": "11667",
+      "md5": "82711353d9d6762d478379ef9ff1d52a",
+      "crc32": "8c7d9b52",
+      "sha1": "758b72144fc84ed138ffa96f187d5af8dac08c5b"
+    },
+    {
+      "name": "I_Georgakopoulou_B_Tsitsanis-I_Gerakina-ca1940.wav",
+      "source": "original",
+      "mtime": "1487387035",
+      "size": "17664404",
+      "md5": "79759db5ec271cf9618b6bcff44a03f0",
+      "crc32": "157af2d9",
+      "sha1": "54b2eaaac1cdc8bf02772fb58281f5e3f6d90df1",
+      "format": "WAVE",
+      "length": "200.28",
+      "track": "01",
+      "height": "0",
+      "width": "0"
+    },
+    {
+      "name": "I_Georgakopoulou_B_Tsitsanis-I_Gerakina-ca1940_spectrogram.png",
+      "source": "derivative",
+      "format": "Spectrogram",
+      "original": "I_Georgakopoulou_B_Tsitsanis-I_Gerakina-ca1940.wav",
+      "mtime": "1487387097",
+      "size": "275778",
+      "md5": "57b8e80025e580dc14adde054dcd850b",
+      "crc32": "6bb882d3",
+      "sha1": "f5764d24f05b9fbd96046256c4c5050f35655363"
+    },
+    {
+      "name": "__ia_thumb.jpg",
+      "source": "original",
+      "mtime": "1535001028",
+      "size": "3163",
+      "md5": "97126bc2e5917ed1e5b66d37443efb20",
+      "crc32": "f987c2fe",
+      "sha1": "73695072ab4c9a349acdc72dc3105450b8bfa162",
+      "format": "Item Tile",
+      "rotation": "0"
+    }
+  ],
+  "files_count": 12,
+  "item_last_updated": 1668704612,
+  "item_size": 34202900,
+  "metadata": {
+    "identifier": "IGeorgakopoulouBTsitsanisIGerakinaCa1940",
+    "mediatype": "audio",
+    "collection": ["78rpm", "audio_music"],
+    "creator": "Ioanna Georgakopoulou and Vassilis Tsitsanis",
+    "date": "1940",
+    "description": "Ioanna Georgakopoulou and Vassilis Tsitsanis sing a traditional-style Greek Kalamatianos called \"I Gerakina\" (\u0397 \u0393\u0395\u03a1\u0391\u039a\u0399\u039d\u0391, which I believe means \"The Buzzard\"), in this recording from circa 1940.\u00a0 From the original 78rpm disk.",
+    "language": "gre",
+    "scanner": "Internet Archive HTML5 Uploader 1.6.3",
+    "subject": ["Greek", "Kalamatianos", "folk", "traditional", "world music", "78rpm"],
+    "title": "Ioanna Georgakopoulou and Vassilis Tsitsanis - I Gerakina",
+    "publicdate": "2017-02-18 03:03:55",
+    "uploader": "78s@verizon.net",
+    "addeddate": "2017-02-18 03:03:55",
+    "curation": "[curator]validator@archive.org[/curator][date]20170218030423[/date][comment]checked for malware[/comment]",
+    "year": "1940",
+    "source": "Original 78rpm disk digitized by old78collector",
+    "backup_location": "ia906307_26"
+  },
+  "server": "dn601703.us.archive.org",
+  "simplelists": {
+    "solo_manifest": {
+      "solo_manifest_dn601703": {
+        "sys_changed_by": { "source": "task", "task_id": "5555277738" },
+        "sys_last_changed": "2026-08-08 13:01:57.636048"
+      }
+    }
+  },
+  "solo": true,
+  "uniq": 1885862811,
+  "workable_servers": ["dn601703.us.archive.org"]
+}
