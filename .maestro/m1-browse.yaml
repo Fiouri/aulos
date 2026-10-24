@@ -54,6 +54,27 @@ appId: com.anywecon.aulos
     below: 'Feature Track 3'
 - back
 
+# Featured artists in per-track album artist tags, numbered 1-4 in one folder: one album.
+- scrollUntilVisible:
+    element: 'Guest List'
+- assertVisible: 'Aulos Host · 2026 · 4 tracks'
+- assertNotVisible:
+    text: 'Guest List'
+    index: 1
+- tapOn: 'Guest List'
+- scrollUntilVisible:
+    element: 'Guest Track 4'
+- assertVisible:
+    text: 'Guest Track 4'
+    below: 'Guest Track 1'
+- back
+
+# Two "Greatest Hits" in one flat folder, both with a track 1: two albums.
+- scrollUntilVisible:
+    element: 'Aulos Blue · 2026 · 2 tracks'
+    direction: UP
+- assertVisible: 'Aulos Red · 2026 · 2 tracks'
+
 # The Greek album in track order, and its artist from the album header.
 - scrollUntilVisible:
     element: 'Ο Μεγάλος Ερωτικός'

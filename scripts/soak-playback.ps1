@@ -4,9 +4,11 @@
 
 .DESCRIPTION
   Starts playback of every song with repeat all (scripts/soak-start.yaml through Maestro), turns
-  the screen off and reads the app's media session from `dumpsys media_session` every interval.
-  Fails as soon as the session is not PLAYING or its position stopped advancing (neither the
-  extrapolated position nor the track changed since the previous sample). Pauses playback and
+  the screen off and reads the app's media session from `dumpsys media_session` and the screen
+  state from `dumpsys power` (mWakefulness) every interval. Fails as soon as the session is not
+  PLAYING, its position stopped advancing (neither the extrapolated position nor the track
+  changed since the previous sample) or the screen is Awake. Refuses to start while Developer
+  options -> Stay awake is on, which keeps a charging phone's screen on. Pauses playback and
   wakes the screen at the end.
 
   -Resume skips the Maestro start and resumes the app's last queue with a media key instead,
@@ -73,6 +75,19 @@ function Get-SessionSample {
   return [pscustomobject]$sample
 }
 
+# Awake, Asleep, Dozing (always-on display) or Dreaming.
+function Get-Wakefulness {
+  $line = @(Invoke-Adb shell dumpsys power) | Where-Object { $_ -match 'mWakefulness=(\w+)' } |
+    Select-Object -First 1
+  if (-not $line -or $line -notmatch 'mWakefulness=(\w+)') { throw 'mWakefulness not found in dumpsys power' }
+  return $Matches[1]
+}
+
+$stayOn = ((Invoke-Adb shell settings get global stay_on_while_plugged_in) | Select-Object -First 1).Trim()
+if ($stayOn -ne '0') {
+  throw "Developer options -> Stay awake is on (stay_on_while_plugged_in=$stayOn); turn it off first."
+}
+
 $PLAYING = 3
 $root = Split-Path -Parent $PSScriptRoot
 $startFlow = Join-Path $root 'scripts\soak-start.yaml'
@@ -98,6 +113,7 @@ $previous = $null
 try {
   while ($true) {
     $sample = Get-SessionSample
+    $screen = Get-Wakefulness
     $elapsed = [int]((Get-Date) - $started).TotalMinutes
     if (-not $sample) {
       $failure = "minute $($elapsed): no media session for $Package"
@@ -107,9 +123,14 @@ try {
         Minute      = $elapsed
         State       = $sample.State
         PositionS   = [math]::Round($sample.EffectiveMs / 1000, 1)
+        Screen      = $screen
         Track       = $sample.Description
       })
-    Write-Host ("min {0,3}  state={1}  position={2,8:N1}s  {3}" -f $elapsed, $sample.State, ($sample.EffectiveMs / 1000), $sample.Description)
+    Write-Host ("min {0,3}  state={1}  position={2,8:N1}s  screen={3}  {4}" -f $elapsed, $sample.State, ($sample.EffectiveMs / 1000), $screen, $sample.Description)
+    if ($screen -eq 'Awake') {
+      $failure = "minute $($elapsed): screen is Awake, expected off for the whole run"
+      break
+    }
     if ($sample.State -ne $PLAYING) {
       $failure = "minute $($elapsed): state $($sample.State), expected PLAYING ($PLAYING)"
       break

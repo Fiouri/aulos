@@ -116,7 +116,7 @@ describe('toTrackFields', () => {
       mimeType: 'audio/flac',
       folder: 'Music/Album/',
     };
-    expect(toTrackFields(audio)).toEqual({
+    expect(toTrackFields(audio, '["local","9"]')).toEqual({
       providerRef: '77',
       title: 'Title',
       artist: 'Artist',
@@ -130,7 +130,7 @@ describe('toTrackFields', () => {
       fileSize: 5_000_000,
       year: 1999,
       albumRef: '9',
-      albumKey: '["artist","album artist","album"]',
+      albumKey: '["local","9"]',
       addedAt: 1_600_000_000_000,
     });
   });

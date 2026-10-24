@@ -4,10 +4,12 @@ import type { Db } from '@/db/types';
 import { normalizeNullable, normalizeText } from '@/search/normalize';
 import {
   diffLocalTracks,
+  toGroupedFields,
   toTrackFields,
   type LocalTrackFields,
   type StoredLocalTrack,
 } from './diff';
+import { albumGroupKeys } from './albumKey';
 import { isFolderExcluded } from './folders';
 import { LOCAL_PROVIDER } from './providers';
 
@@ -55,9 +57,9 @@ function normColumns(t: LocalTrackFields) {
 export async function scanLibrary(db: Db, options: ScanOptions = {}): Promise<ScanResult> {
   const { query = queryAudio, now = Date.now, excludedFolders = [] } = options;
   const started = now();
-  const scanned = (await query())
-    .filter((a) => !isFolderExcluded(a.folder, excludedFolders))
-    .map(toTrackFields);
+  const audio = (await query()).filter((a) => !isFolderExcluded(a.folder, excludedFolders));
+  const albumKeys = albumGroupKeys(audio.map(toGroupedFields));
+  const scanned = audio.map((a, i) => toTrackFields(a, albumKeys[i] ?? null));
   const scannedAt = now();
 
   const diff = await db.transaction(async (tx) => {

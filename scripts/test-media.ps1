@@ -5,8 +5,9 @@
 .DESCRIPTION
   standard  Greek album (Μάνος Χατζιδάκις, titles with tonos, cover art), a 3-track gapless FLAC
             album cut from one continuous tone at sample boundaries, a two-disc album with
-            accented Latin tags and a year, and a 4-track album with featured artists and no
-            album artist tag (14 tracks).
+            accented Latin tags and a year, a 4-track album with featured artists and no
+            album artist tag, a 4-track album whose featured artists are in per-track album
+            artist tags, and two 2-track "Greatest Hits" albums in one folder (22 tracks).
   bulk      standard plus 2,000 short tracks (200 albums of 10) for the performance run.
   clean     Removes /sdcard/Music/AulosTest from the device and rescans.
 
@@ -103,7 +104,9 @@ function New-StandardSet([string]$Root) {
   $gapless = Join-Path $Root 'Gapless'
   $latin = Join-Path $Root 'Accents'
   $featuring = Join-Path $Root 'Featuring'
-  New-Item -ItemType Directory -Force -Path $greek, $gapless, $latin, $featuring | Out-Null
+  $guests = Join-Path $Root 'Guests'
+  $flat = Join-Path $Root 'Flat'
+  New-Item -ItemType Directory -Force -Path $greek, $gapless, $latin, $featuring, $guests, $flat | Out-Null
 
   # Greek album: tonos, dialytika and final sigma in the tags; cover art for the artwork path.
   $cover = Join-Path $Root 'cover-greek.png'
@@ -176,6 +179,35 @@ function New-StandardSet([string]$Root) {
       album  = 'Featuring Tape'
       track  = "$($i + 1)/$($featured.Count)"
       date   = '2026'
+    }
+  }
+
+  # Featured artists written into a per-track album artist tag, as some downloaders do: one
+  # folder, track numbers 1-4 without repeats, so it must still show as one album.
+  $guestArtists = @('Aulos Host', 'Aulos Host, Δέλτα', 'Aulos Host', 'Aulos Host, Echo')
+  for ($i = 0; $i -lt $guestArtists.Count; $i++) {
+    New-Mp3 (Join-Path $guests ('{0:D2}.mp3' -f ($i + 1))) (587 + 20 * $i) 2 @{
+      title        = "Guest Track $($i + 1)"
+      artist       = $guestArtists[$i]
+      album_artist = $guestArtists[$i]
+      album        = 'Guest List'
+      track        = "$($i + 1)/$($guestArtists.Count)"
+      date         = '2026'
+    }
+  }
+
+  # Two different albums named "Greatest Hits" side by side in one flat folder: both have a
+  # track 1 and a track 2, so they must stay two albums.
+  foreach ($hitsArtist in @('Aulos Red', 'Aulos Blue')) {
+    for ($t = 1; $t -le 2; $t++) {
+      New-Mp3 (Join-Path $flat ('{0}-{1:D2}.mp3' -f $hitsArtist.Split(' ')[1].ToLower(), $t)) (659 + 20 * $t) 2 @{
+        title        = "$hitsArtist Hit $t"
+        artist       = $hitsArtist
+        album_artist = $hitsArtist
+        album        = 'Greatest Hits'
+        track        = "$t/2"
+        date         = '2026'
+      }
     }
   }
 }

@@ -46,7 +46,7 @@ describe('migration 003 (album grouping)', () => {
   afterEach(() => db.close());
 
   it('keys existing tracks, merges the split album and converts legacy album favorites', async () => {
-    expect(await migrate(db, MIGRATIONS)).toEqual([3]);
+    expect(await migrate(db, MIGRATIONS)).toEqual([3, 4]);
     expect(await db.getAll(TRACK_STATE)).toEqual([
       { id: 1, provider_ref: '1', album_ref: null, album_key: '["folder","tape",null]' },
       { id: 2, provider_ref: '2', album_ref: null, album_key: '["folder","tape",null]' },

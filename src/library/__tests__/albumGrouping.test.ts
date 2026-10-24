@@ -6,7 +6,7 @@ import { openNodeDb, type NodeDb } from '../../../test/node-db';
 import { favoriteAlbums, setFavorite } from '../../collections/favorites';
 import { migrate } from '../../db/migrate';
 import { MIGRATIONS } from '../../db/migrations';
-import { albumGroupKey } from '../albumKey';
+import { albumGroupKey, albumGroupKeys } from '../albumKey';
 import { albumTracks, artistAlbums, listAlbums, listArtists } from '../queries';
 import { scanLibrary } from '../scan';
 
@@ -124,6 +124,123 @@ describe('album grouping', () => {
     expect(result.updated).toBe(2);
     expect((await favoriteAlbums(db)).map((a) => [a.key, a.name])).toEqual([
       ['["local","31"]', 'Tape'],
+    ]);
+  });
+});
+
+describe('albums split by per-track album artist tags', () => {
+  let db: NodeDb;
+  beforeEach(async () => {
+    db = openNodeDb();
+    await migrate(db, MIGRATIONS);
+  });
+  afterEach(() => db.close());
+
+  const streetTape = (id: string, trackNo: number, artist: string) =>
+    mediaAudio(id, {
+      title: `Track ${trackNo}`,
+      artist,
+      albumArtist: artist,
+      album: 'Street Tape 3',
+      albumId: `id-${artist}`,
+      folder: 'Downloads /Street Tape 3/',
+      trackNo,
+    });
+
+  it('merges one folder of numbered tracks with featured album artists into one album', async () => {
+    await scanLibrary(db, {
+      query: async () => [
+        streetTape('1', 1, 'Grey Falcon'),
+        streetTape('2', 2, 'Grey Falcon, Teo Blue'),
+        streetTape('3', 3, 'Grey Falcon'),
+        streetTape('4', 4, 'Grey Falcon, Novak'),
+        streetTape('5', 5, 'Grey Falcon, Echo'),
+        streetTape('6', 6, 'Grey Falcon'),
+      ],
+    });
+    const albums = await listAlbums(db, 'name');
+    expect(albums.map((a) => [a.key, a.name, a.artist, a.various, a.trackCount])).toEqual([
+      [
+        '["folder","street tape 3","Downloads /Street Tape 3/"]',
+        'Street Tape 3',
+        'Grey Falcon',
+        0,
+        6,
+      ],
+    ]);
+    expect((await albumTracks(db, albums[0]?.key ?? '')).map((t) => t.trackNo)).toEqual([
+      1, 2, 3, 4, 5, 6,
+    ]);
+  });
+
+  it('shows Various Artists for a merged album when no track artist has half of it', async () => {
+    await scanLibrary(db, {
+      query: async () => [streetTape('1', 1, 'A'), streetTape('2', 2, 'B'), streetTape('3', 3, 'C')],
+    });
+    expect((await listAlbums(db, 'name')).map((a) => [a.artist, a.various, a.trackCount])).toEqual([
+      [null, 1, 3],
+    ]);
+  });
+
+  it('keeps two same-named albums in one flat folder apart when track numbers collide', async () => {
+    const hits = (id: string, trackNo: number, albumArtist: string) =>
+      mediaAudio(id, {
+        artist: albumArtist,
+        albumArtist,
+        album: 'Greatest Hits',
+        folder: 'Music/',
+        trackNo,
+      });
+    await scanLibrary(db, {
+      query: async () => [
+        hits('1', 1, 'Queen'),
+        hits('2', 2, 'Queen'),
+        hits('3', 1, 'ABBA'),
+        hits('4', 2, 'ABBA'),
+      ],
+    });
+    expect((await listAlbums(db, 'name')).map((a) => [a.name, a.artist, a.trackCount])).toEqual([
+      ['Greatest Hits', 'ABBA', 2],
+      ['Greatest Hits', 'Queen', 2],
+    ]);
+  });
+
+  it('treats the same track number on another disc as no collision', () => {
+    const base = { provider: 'local', album: 'Live', albumRef: null, folder: 'Music/' };
+    const keys = albumGroupKeys([
+      { ...base, albumArtist: 'X', discNo: 1, trackNo: 1 },
+      { ...base, albumArtist: 'X feat. Y', discNo: 2, trackNo: 1 },
+    ]);
+    expect(new Set(keys)).toEqual(new Set(['["folder","live","Music/"]']));
+  });
+
+  it('merges tracks without track numbers: they never block the merge', async () => {
+    await scanLibrary(db, {
+      query: async () => [
+        mediaAudio('1', { album: 'Tape', albumArtist: 'X', artist: 'X', trackNo: null }),
+        mediaAudio('2', { album: 'Tape', albumArtist: 'X feat. Y', artist: 'X', trackNo: null }),
+        mediaAudio('3', { album: 'Tape', albumArtist: 'X feat. Z', artist: 'X', trackNo: 1 }),
+      ],
+    });
+    expect((await listAlbums(db, 'name')).map((a) => [a.name, a.artist, a.trackCount])).toEqual([
+      ['Tape', 'X', 3],
+    ]);
+  });
+
+  it('leaves albums with one album artist and other providers to albumGroupKey', () => {
+    const base = { album: 'A', albumRef: null, folder: 'Music/', discNo: null, trackNo: 1 };
+    expect(
+      albumGroupKeys([
+        { ...base, provider: 'local', albumArtist: 'X' },
+        { ...base, provider: 'local', albumArtist: 'x' },
+        { ...base, provider: 'nuclear', albumArtist: 'Y' },
+        { ...base, provider: 'nuclear', albumArtist: 'Z', trackNo: 2 },
+      ]),
+    ).toEqual([
+      '["artist","x","a"]',
+      '["artist","x","a"]',
+      '["artist","y","a"]',
+      '["artist","z","a"]',
     ]);
   });
 });
