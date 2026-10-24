@@ -5,6 +5,7 @@ import { openNodeDb, type NodeDb } from '../../../test/node-db';
 import { assertFts5 } from '../fts';
 import { migrate } from '../migrate';
 import { MIGRATIONS } from '../migrations';
+import { albumGroupKey } from '../../library/albumKey';
 import { normalizeNullable, normalizeText } from '../../search/normalize';
 
 const insertTrack = (
@@ -17,8 +18,8 @@ const insertTrack = (
 ) =>
   db.run(
     `INSERT INTO tracks (provider, provider_ref, title, artist, album, title_norm, artist_norm,
-                         album_norm)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+                         album_norm, album_key)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     [
       provider,
       ref,
@@ -28,6 +29,7 @@ const insertTrack = (
       normalizeText(title),
       normalizeNullable(artist),
       normalizeNullable(album),
+      albumGroupKey({ provider, album, albumArtist: null, albumRef: null, folder: 'Music/' }),
     ],
   );
 

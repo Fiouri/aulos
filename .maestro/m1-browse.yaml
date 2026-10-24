@@ -36,6 +36,24 @@ appId: com.anywecon.aulos
     below: 'Señorita'
 - back
 
+# Featured artists without an album artist tag: one album of 4 tracks under its main artist.
+- scrollUntilVisible:
+    element: 'Featuring Tape'
+- assertVisible: 'Aulos Crew · 2026 · 4 tracks'
+- assertNotVisible:
+    text: 'Featuring Tape'
+    index: 1
+- tapOn: 'Featuring Tape'
+- assertVisible:
+    id: 'detail-title'
+    text: 'Featuring Tape'
+- scrollUntilVisible:
+    element: 'Feature Track 4'
+- assertVisible:
+    text: 'Feature Track 4'
+    below: 'Feature Track 3'
+- back
+
 # The Greek album in track order, and its artist from the album header.
 - scrollUntilVisible:
     element: 'Ο Μεγάλος Ερωτικός'

@@ -7,6 +7,7 @@ import { migrate } from '../migrate';
 import { MIGRATIONS } from '../migrations';
 
 const V1 = MIGRATIONS.filter((m) => m.version === 1);
+const V2 = MIGRATIONS.filter((m) => m.version <= 2);
 
 describe('migration 002 (search)', () => {
   let db: NodeDb;
@@ -23,7 +24,7 @@ describe('migration 002 (search)', () => {
   afterEach(() => db.close());
 
   it('backfills the normalised columns and added_at of existing tracks', async () => {
-    expect(await migrate(db, MIGRATIONS, () => 5)).toEqual([2]);
+    expect(await migrate(db, V2, () => 5)).toEqual([2]);
     const rows = await db.getAll(
       `SELECT provider_ref, title_norm, artist_norm, album_norm, album_artist_norm, added_at
          FROM tracks ORDER BY provider_ref`,

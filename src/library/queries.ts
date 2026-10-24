@@ -15,12 +15,21 @@ export interface Track {
   localPath: string | null;
   year: number | null;
   addedAt: number | null;
+  /** Null when the track has no album tag. */
+  albumKey: string | null;
 }
 
 export interface Album {
+  /** tracks.album_key: the album's identity in routes, favorites and the artwork cache. */
+  key: string;
   name: string;
-  /** Album artist, falling back to the track artist. */
+  /**
+   * Album artist; without that tag, the track artist holding at least half of the tracks.
+   * Null when unknown or when the album is various artists.
+   */
   artist: string | null;
+  /** 1 when no single track artist holds half of an album without album artist. */
+  various: 0 | 1;
   trackCount: number;
   durationMs: number | null;
   year: number | null;
@@ -43,9 +52,10 @@ export type AlbumSort = (typeof ALBUM_SORTS)[number];
 
 export const TRACK_COLUMNS = `t.id, t.provider, t.provider_ref AS providerRef, t.title, t.artist,
   t.album, t.album_artist AS albumArtist, t.track_no AS trackNo, t.disc_no AS discNo,
-  t.duration_ms AS durationMs, t.local_path AS localPath, t.year, t.added_at AS addedAt`;
+  t.duration_ms AS durationMs, t.local_path AS localPath, t.year, t.added_at AS addedAt,
+  t.album_key AS albumKey`;
 
-const ALBUM_COLUMNS = `a.name, a.artist, a.track_count AS trackCount, a.duration_ms AS durationMs,
+export const ALBUM_COLUMNS = `a.key, a.name, a.artist, a.various, a.track_count AS trackCount, a.duration_ms AS durationMs,
   a.year, a.sample_path AS samplePath`;
 
 const ARTIST_COLUMNS = `ar.name, ar.track_count AS trackCount, ar.album_count AS albumCount,
@@ -86,19 +96,14 @@ export function listArtists(db: Db): Promise<Artist[]> {
   return db.getAll<Artist>(`SELECT ${ARTIST_COLUMNS} FROM artists ar ORDER BY ar.name_norm`);
 }
 
-export function getAlbum(db: Db, name: string, artist: string | null): Promise<Album | null> {
-  return db.getFirst<Album>(
-    `SELECT ${ALBUM_COLUMNS} FROM albums a WHERE a.name = ? AND a.artist IS ?`,
-    [name, artist],
-  );
+export function getAlbum(db: Db, key: string): Promise<Album | null> {
+  return db.getFirst<Album>(`SELECT ${ALBUM_COLUMNS} FROM albums a WHERE a.key = ?`, [key]);
 }
 
-export function albumTracks(db: Db, name: string, artist: string | null): Promise<Track[]> {
+export function albumTracks(db: Db, key: string): Promise<Track[]> {
   return db.getAll<Track>(
-    `SELECT ${TRACK_COLUMNS} FROM tracks t
-      WHERE t.album = ? AND COALESCE(t.album_artist, t.artist) IS ?
-      ORDER BY ${ALBUM_ORDER}, t.id`,
-    [name, artist],
+    `SELECT ${TRACK_COLUMNS} FROM tracks t WHERE t.album_key = ? ORDER BY ${ALBUM_ORDER}, t.id`,
+    [key],
   );
 }
 
@@ -110,9 +115,7 @@ export function getArtist(db: Db, name: string): Promise<Artist | null> {
 export function artistAlbums(db: Db, artist: string): Promise<Album[]> {
   return db.getAll<Album>(
     `SELECT ${ALBUM_COLUMNS} FROM albums a
-      WHERE (a.name, a.artist) IN (
-        SELECT album, COALESCE(album_artist, artist) FROM tracks
-         WHERE artist = ? AND album IS NOT NULL)
+      WHERE a.key IN (SELECT album_key FROM tracks WHERE artist = ? AND album_key IS NOT NULL)
       ORDER BY a.year DESC NULLS LAST, a.name_norm`,
     [artist],
   );
@@ -146,20 +149,4 @@ export async function getTracks(db: Db, ids: readonly number[]): Promise<Track[]
     const track = byId.get(id);
     return track ? [track] : [];
   });
-}
-
-export function albumKey(name: string, artist: string | null): string {
-  return JSON.stringify([name, artist]);
-}
-
-export function parseAlbumKey(key: string): { name: string; artist: string | null } | null {
-  try {
-    const value: unknown = JSON.parse(key);
-    if (!Array.isArray(value) || value.length !== 2) return null;
-    const [name, artist] = value as unknown[];
-    if (typeof name !== 'string' || (artist !== null && typeof artist !== 'string')) return null;
-    return { name, artist };
-  } catch {
-    return null;
-  }
 }

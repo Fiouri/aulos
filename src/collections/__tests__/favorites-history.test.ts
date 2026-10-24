@@ -5,7 +5,7 @@ import { mediaAudio } from '../../../test/fixtures';
 import { openNodeDb, type NodeDb } from '../../../test/node-db';
 import { migrate } from '../../db/migrate';
 import { MIGRATIONS } from '../../db/migrations';
-import { albumKey, listSongs } from '../../library/queries';
+import { listAlbums, listSongs } from '../../library/queries';
 import { scanLibrary } from '../../library/scan';
 import {
   favoriteAlbums,
@@ -46,8 +46,9 @@ describe('favorites and history', () => {
   });
 
   it('keeps album and artist favorites and skips the ones no longer in the library', async () => {
-    await setFavorite(db, 'album', albumKey('One', 'X'), true, 1);
-    await setFavorite(db, 'album', albumKey('Gone', null), true, 2);
+    const one = (await listAlbums(db, 'name')).find((a) => a.name === 'One');
+    await setFavorite(db, 'album', one?.key ?? '', true, 1);
+    await setFavorite(db, 'album', '["local","404"]', true, 2);
     await setFavorite(db, 'artist', 'Y', true, 1);
     await setFavorite(db, 'artist', 'Nobody', true, 2);
     expect((await favoriteAlbums(db)).map((a) => a.name)).toEqual(['One']);

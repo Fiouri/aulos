@@ -1,4 +1,6 @@
 import type { MediaStoreAudio } from '../../modules/media-store';
+import { albumGroupKey } from './albumKey';
+import { LOCAL_PROVIDER } from './providers';
 
 /** Columns of a `tracks` row that a local scan owns. */
 export interface LocalTrackFields {
@@ -14,6 +16,10 @@ export interface LocalTrackFields {
   fileMtime: number | null;
   fileSize: number | null;
   year: number | null;
+  /** MediaStore ALBUM_ID. */
+  albumRef: string | null;
+  /** Derived from the tags, album id and folder by albumGroupKey. */
+  albumKey: string | null;
   /** Only written on insert: when the file first entered the library. */
   addedAt: number | null;
 }
@@ -42,6 +48,8 @@ const COMPARED_FIELDS = [
   'fileMtime',
   'fileSize',
   'year',
+  'albumRef',
+  'albumKey',
 ] as const satisfies readonly (keyof LocalTrackFields)[];
 
 export function toTrackFields(audio: MediaStoreAudio): LocalTrackFields {
@@ -58,6 +66,14 @@ export function toTrackFields(audio: MediaStoreAudio): LocalTrackFields {
     fileMtime: audio.dateModified,
     fileSize: audio.sizeBytes,
     year: audio.year,
+    albumRef: audio.albumId,
+    albumKey: albumGroupKey({
+      provider: LOCAL_PROVIDER,
+      album: audio.album,
+      albumArtist: audio.albumArtist,
+      albumRef: audio.albumId,
+      folder: audio.folder,
+    }),
     addedAt: audio.dateAdded,
   };
 }

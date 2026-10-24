@@ -1,8 +1,8 @@
 import { router } from 'expo-router';
 
-/** Album routes carry name and artist as search params: names may contain slashes. */
-export function openAlbum(name: string, artist: string | null): void {
-  router.push({ pathname: '/album', params: artist === null ? { name } : { name, artist } });
+/** Album routes carry the album key as a search param: keys may contain slashes. */
+export function openAlbum(key: string): void {
+  router.push({ pathname: '/album', params: { key } });
 }
 
 export function openArtist(name: string): void {

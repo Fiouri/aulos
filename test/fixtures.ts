@@ -18,7 +18,7 @@ export const mediaAudio = (
   dateModified: 1_700_000_000_000,
   dateAdded: 1_700_000_000_000,
   year: null,
-  albumId: '1',
+  albumId: null,
   mimeType: 'audio/mpeg',
   folder: 'Music/',
   ...overrides,

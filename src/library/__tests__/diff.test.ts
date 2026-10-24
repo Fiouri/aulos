@@ -19,6 +19,8 @@ const fields = (ref: string, overrides: Partial<LocalTrackFields> = {}): LocalTr
   fileMtime: 1_700_000_000_000,
   fileSize: 4_000_000,
   year: null,
+  albumRef: null,
+  albumKey: '["folder","album","Music/"]',
   addedAt: 1_600_000_000_000,
   ...overrides,
 });
@@ -127,6 +129,8 @@ describe('toTrackFields', () => {
       fileMtime: 1_700_000_000_000,
       fileSize: 5_000_000,
       year: 1999,
+      albumRef: '9',
+      albumKey: '["artist","album artist","album"]',
       addedAt: 1_600_000_000_000,
     });
   });

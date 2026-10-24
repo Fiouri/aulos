@@ -1,4 +1,5 @@
 import { queryAudio, type MediaStoreAudio } from '../../modules/media-store';
+import { moveAlbumFavorites } from '@/collections/favorites';
 import type { Db } from '@/db/types';
 import { normalizeNullable, normalizeText } from '@/search/normalize';
 import {
@@ -8,6 +9,7 @@ import {
   type StoredLocalTrack,
 } from './diff';
 import { isFolderExcluded } from './folders';
+import { LOCAL_PROVIDER } from './providers';
 
 export interface ScanResult {
   added: number;
@@ -24,14 +26,12 @@ export interface ScanOptions {
   excludedFolders?: readonly string[];
 }
 
-export const LOCAL_PROVIDER = 'local';
-
 async function getStoredLocalTracks(db: Db): Promise<StoredLocalTrack[]> {
   return db.getAll<StoredLocalTrack>(
     `SELECT id, provider_ref AS providerRef, title, artist, album, album_artist AS albumArtist,
             track_no AS trackNo, disc_no AS discNo, duration_ms AS durationMs,
             local_path AS localPath, file_mtime AS fileMtime, file_size AS fileSize, year,
-            added_at AS addedAt
+            album_ref AS albumRef, album_key AS albumKey, added_at AS addedAt
        FROM tracks WHERE provider = ?`,
     [LOCAL_PROVIDER],
   );
@@ -61,13 +61,15 @@ export async function scanLibrary(db: Db, options: ScanOptions = {}): Promise<Sc
   const scannedAt = now();
 
   const diff = await db.transaction(async (tx) => {
-    const result = diffLocalTracks(await getStoredLocalTracks(tx), scanned);
+    const stored = await getStoredLocalTracks(tx);
+    const result = diffLocalTracks(stored, scanned);
     for (const t of result.toInsert) {
       await tx.run(
         `INSERT INTO tracks (provider, provider_ref, title, artist, album, album_artist, track_no,
                              disc_no, duration_ms, local_path, file_mtime, file_size, year, added_at,
-                             title_norm, artist_norm, album_norm, album_artist_norm)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+                             album_ref, album_key, title_norm, artist_norm, album_norm,
+                             album_artist_norm)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         [
           LOCAL_PROVIDER,
           t.providerRef,
@@ -83,6 +85,8 @@ export async function scanLibrary(db: Db, options: ScanOptions = {}): Promise<Sc
           t.fileSize,
           t.year,
           t.addedAt ?? scannedAt,
+          t.albumRef,
+          t.albumKey,
           ...normColumns(t),
         ],
       );
@@ -91,8 +95,8 @@ export async function scanLibrary(db: Db, options: ScanOptions = {}): Promise<Sc
       await tx.run(
         `UPDATE tracks SET title = ?, artist = ?, album = ?, album_artist = ?, track_no = ?,
                            disc_no = ?, duration_ms = ?, local_path = ?, file_mtime = ?,
-                           file_size = ?, year = ?, title_norm = ?, artist_norm = ?,
-                           album_norm = ?, album_artist_norm = ?
+                           file_size = ?, year = ?, album_ref = ?, album_key = ?,
+                           title_norm = ?, artist_norm = ?, album_norm = ?, album_artist_norm = ?
           WHERE id = ?`,
         [
           t.title,
@@ -106,6 +110,8 @@ export async function scanLibrary(db: Db, options: ScanOptions = {}): Promise<Sc
           t.fileMtime,
           t.fileSize,
           t.year,
+          t.albumRef,
+          t.albumKey,
           ...normColumns(t),
           t.id,
         ],
@@ -114,6 +120,14 @@ export async function scanLibrary(db: Db, options: ScanOptions = {}): Promise<Sc
     for (const id of result.toDelete) {
       await tx.run('DELETE FROM tracks WHERE id = ?', [id]);
     }
+    const oldKeys = new Map(stored.map((t) => [t.id, t.albumKey]));
+    await moveAlbumFavorites(
+      tx,
+      result.toUpdate.flatMap((t) => {
+        const from = oldKeys.get(t.id);
+        return from && t.albumKey && from !== t.albumKey ? [{ from, to: t.albumKey }] : [];
+      }),
+    );
     return result;
   });
 

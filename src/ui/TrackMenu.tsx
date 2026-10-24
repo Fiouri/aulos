@@ -50,7 +50,7 @@ export function TrackMenu({ track, onClose, extraItems = [] }: TrackMenuProps) {
           testID: 'menu-favorite',
           onPress: toggleFavorite,
         },
-        ...(track.album !== null
+        ...(track.albumKey !== null
           ? [
               {
                 label: t('track.goToAlbum'),

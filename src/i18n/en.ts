@@ -80,6 +80,7 @@ export const en = {
   },
   album: {
     discNumber: 'Disc {{disc}}',
+    variousArtists: 'Various Artists',
     favorite: 'Add album to favorites',
     unfavorite: 'Remove album from favorites',
   },

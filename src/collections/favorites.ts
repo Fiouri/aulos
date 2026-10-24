@@ -2,7 +2,6 @@ import type { Db } from '@/db/types';
 import {
   getAlbum,
   getArtist,
-  parseAlbumKey,
   TRACK_COLUMNS,
   type Album,
   type Artist,
@@ -60,8 +59,7 @@ export function favoriteTracks(db: Db): Promise<Track[]> {
 export async function favoriteAlbums(db: Db): Promise<Album[]> {
   const albums: Album[] = [];
   for (const key of await favoriteKeys(db, 'album')) {
-    const parsed = parseAlbumKey(key);
-    const album = parsed && (await getAlbum(db, parsed.name, parsed.artist));
+    const album = await getAlbum(db, key);
     if (album) albums.push(album);
   }
   return albums;
@@ -74,4 +72,41 @@ export async function favoriteArtists(db: Db): Promise<Artist[]> {
     if (artist) artists.push(artist);
   }
   return artists;
+}
+
+export interface AlbumKeyMove {
+  from: string;
+  to: string;
+}
+
+/**
+ * Keeps album favorites attached when a rescan re-keys an album (new tags, or its album id
+ * stored for the first time). A favorite follows the key most of the album's tracks moved to,
+ * and only once no track holds the old key any more.
+ */
+export async function moveAlbumFavorites(db: Db, moves: readonly AlbumKeyMove[]): Promise<void> {
+  const targets = new Map<string, Map<string, number>>();
+  for (const { from, to } of moves) {
+    const counts = targets.get(from) ?? new Map<string, number>();
+    counts.set(to, (counts.get(to) ?? 0) + 1);
+    targets.set(from, counts);
+  }
+  for (const [from, counts] of targets) {
+    const favorite = await db.getFirst<{ added_at: number }>(
+      `SELECT added_at FROM favorites WHERE kind = 'album' AND key = ?`,
+      [from],
+    );
+    if (!favorite) continue;
+    const remaining = await db.getFirst<{ n: number }>(
+      'SELECT COUNT(*) AS n FROM tracks WHERE album_key = ?',
+      [from],
+    );
+    if ((remaining?.n ?? 0) > 0) continue;
+    const [to] = [...counts].reduce((best, entry) => (entry[1] > best[1] ? entry : best));
+    await db.run(
+      `INSERT INTO favorites (kind, key, added_at) VALUES ('album', ?, ?) ON CONFLICT DO NOTHING`,
+      [to, favorite.added_at],
+    );
+    await db.run(`DELETE FROM favorites WHERE kind = 'album' AND key = ?`, [from]);
+  }
 }

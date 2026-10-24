@@ -92,11 +92,7 @@ export default function ArtistScreen() {
               </AppText>
             )}
             {albums.map((album, index) => (
-              <AlbumRow
-                key={`${album.name}|${album.artist ?? ''}`}
-                album={album}
-                testID={`artist-album-${index}`}
-              />
+              <AlbumRow key={album.key} album={album} testID={`artist-album-${index}`} />
             ))}
             <AppText variant="heading" style={styles.heading}>
               {t('artist.songs')}

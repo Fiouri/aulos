@@ -6,7 +6,6 @@ import { openNodeDb, type NodeDb } from '../../../test/node-db';
 import { migrate } from '../../db/migrate';
 import { MIGRATIONS } from '../../db/migrations';
 import {
-  albumKey,
   albumTracks,
   artistAlbums,
   artistTracks,
@@ -15,7 +14,6 @@ import {
   listAlbums,
   listArtists,
   listSongs,
-  parseAlbumKey,
 } from '../queries';
 import { scanLibrary } from '../scan';
 
@@ -90,7 +88,8 @@ describe('library queries', () => {
   });
 
   it('orders album tracks by disc, then track number', async () => {
-    const tracks = await albumTracks(db, 'Δεύτερο', 'Άλφα');
+    const album = (await listAlbums(db, 'name')).find((a) => a.name === 'Δεύτερο');
+    const tracks = await albumTracks(db, album?.key ?? '');
     expect(tracks.map((t) => t.title)).toEqual(['Έψιλον', 'Zeta', 'Alpha']);
   });
 
@@ -117,12 +116,5 @@ describe('library queries', () => {
       a.id,
       b.id,
     ]);
-  });
-
-  it('round-trips album keys, including albums without an artist', () => {
-    expect(parseAlbumKey(albumKey('Δεύτερο', 'Άλφα'))).toEqual({ name: 'Δεύτερο', artist: 'Άλφα' });
-    expect(parseAlbumKey(albumKey('X', null))).toEqual({ name: 'X', artist: null });
-    expect(parseAlbumKey('not json')).toBeNull();
-    expect(parseAlbumKey('[1,2]')).toBeNull();
   });
 });

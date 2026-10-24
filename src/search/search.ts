@@ -1,6 +1,12 @@
 import { listPlaylists, type Playlist } from '@/collections/playlists';
 import type { Db, SqlParams } from '@/db/types';
-import { TRACK_COLUMNS, type Album, type Artist, type Track } from '@/library/queries';
+import {
+  ALBUM_COLUMNS,
+  TRACK_COLUMNS,
+  type Album,
+  type Artist,
+  type Track,
+} from '@/library/queries';
 
 import { ftsQuery, normalizeText, searchTokens } from './normalize';
 
@@ -34,8 +40,7 @@ export function searchAlbums(db: Db, query: string, limit: number): Promise<Albu
   if (tokens.length === 0) return Promise.resolve([]);
   const params: SqlParams = [...tokens, limit];
   return db.getAll<Album>(
-    `SELECT a.name, a.artist, a.track_count AS trackCount, a.duration_ms AS durationMs, a.year,
-            a.sample_path AS samplePath
+    `SELECT ${ALBUM_COLUMNS}
        FROM albums a
       WHERE ${containsAll(`(a.name_norm || ' ' || COALESCE(a.artist_norm, ''))`, tokens)}
       ORDER BY a.name_norm LIMIT ?`,

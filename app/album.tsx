@@ -6,7 +6,7 @@ import { Pressable } from 'react-native';
 import type { Db } from '@/db/types';
 import { useDbQuery } from '@/db/useDbQuery';
 import { albumArtworkSource } from '@/library/artwork';
-import { albumKey, albumTracks, getAlbum } from '@/library/queries';
+import { albumTracks, getAlbum } from '@/library/queries';
 import { usePlayerStore } from '@/stores/player';
 import { AppText } from '@/ui/AppText';
 import { Artwork } from '@/ui/Artwork';
@@ -15,6 +15,7 @@ import { DetailHeader } from '@/ui/DetailHeader';
 import { formatDurationMs } from '@/ui/format';
 import { IconButton } from '@/ui/IconButton';
 import { DetailScreen } from '@/ui/Layouts';
+import { albumArtistLabel } from '@/ui/library/rows';
 import { openArtist } from '@/ui/navigation';
 import { useColors } from '@/ui/theme';
 import { TrackList } from '@/ui/TrackList';
@@ -23,20 +24,20 @@ import { useFavorite } from '@/ui/useFavorite';
 export default function AlbumScreen() {
   const { t } = useTranslation();
   const colors = useColors();
-  const params = useLocalSearchParams<{ name: string; artist?: string }>();
-  const name = params.name;
-  const artist = params.artist ?? null;
+  const { key } = useLocalSearchParams<{ key: string }>();
   const load = useCallback(
     async (db: Db) => ({
-      album: await getAlbum(db, name, artist),
-      tracks: await albumTracks(db, name, artist),
+      album: await getAlbum(db, key),
+      tracks: await albumTracks(db, key),
     }),
-    [name, artist],
+    [key],
   );
   const data = useDbQuery(load);
-  const [favorite, toggleFavorite] = useFavorite('album', albumKey(name, artist));
+  const [favorite, toggleFavorite] = useFavorite('album', key);
   const tracks = data?.tracks ?? [];
   const album = data?.album ?? null;
+  const name = album?.name ?? '';
+  const artist = album?.artist ?? null;
 
   const meta = album
     ? [
@@ -66,7 +67,11 @@ export default function AlbumScreen() {
             }
             title={name}
             lines={[
-              artist === null ? null : (
+              album === null ? null : artist === null ? (
+                <AppText style={{ color: colors.textSecondary }}>
+                  {albumArtistLabel(album, t)}
+                </AppText>
+              ) : (
                 <Pressable accessibilityRole="link" onPress={() => openArtist(artist)}>
                   <AppText style={{ color: colors.accent }}>{artist}</AppText>
                 </Pressable>

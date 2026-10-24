@@ -23,7 +23,7 @@ export function useTrackActions() {
       openAddToPlaylist(tracks.map((track) => track.id));
     },
     goToAlbum(track: Track) {
-      if (track.album !== null) openAlbum(track.album, track.albumArtist ?? track.artist);
+      if (track.albumKey !== null) openAlbum(track.albumKey);
     },
     goToArtist(track: Track) {
       if (track.artist !== null) openArtist(track.artist);

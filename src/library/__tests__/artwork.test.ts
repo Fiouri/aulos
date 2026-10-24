@@ -61,16 +61,17 @@ describe('artwork cache', () => {
   });
 
   it('keys tracks by album so an album shares one image', () => {
-    const base = { artist: 'X', albumArtist: null, localPath: 'content://media/1' };
-    expect(trackArtworkSource({ ...base, album: 'A' })).toEqual({
-      key: 'album:["A","X"]',
+    const base = { albumKey: '["local","7"]', localPath: 'content://media/1' };
+    expect(trackArtworkSource(base)).toEqual({
+      key: 'album:["local","7"]',
       contentUri: 'content://media/1',
     });
-    expect(albumArtworkSource({ name: 'A', artist: 'X', samplePath: 'content://media/9' })).toEqual(
-      { key: 'album:["A","X"]', contentUri: 'content://media/9' },
-    );
-    expect(trackArtworkSource({ ...base, album: null })?.key).toBe('track:content://media/1');
-    expect(trackArtworkSource({ ...base, album: 'A', localPath: null })).toBeNull();
-    expect(albumArtworkSource({ name: 'A', artist: 'X', samplePath: null })).toBeNull();
+    expect(albumArtworkSource({ key: '["local","7"]', samplePath: 'content://media/9' })).toEqual({
+      key: 'album:["local","7"]',
+      contentUri: 'content://media/9',
+    });
+    expect(trackArtworkSource({ ...base, albumKey: null })?.key).toBe('track:content://media/1');
+    expect(trackArtworkSource({ ...base, localPath: null })).toBeNull();
+    expect(albumArtworkSource({ key: '["local","7"]', samplePath: null })).toBeNull();
   });
 });

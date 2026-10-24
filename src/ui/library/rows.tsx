@@ -1,3 +1,4 @@
+import type { TFunction } from 'i18next';
 import { useTranslation } from 'react-i18next';
 
 import type { Playlist } from '@/collections/playlists';
@@ -10,10 +11,15 @@ import { ListRow } from '../ListRow';
 import { openAlbum, openArtist, openPlaylist } from '../navigation';
 import { useColors } from '../theme';
 
+export function albumArtistLabel(album: Pick<Album, 'artist' | 'various'>, t: TFunction): string {
+  if (album.various) return t('album.variousArtists');
+  return album.artist ?? t('common.unknownArtist');
+}
+
 export function AlbumRow({ album, testID }: { album: Album; testID?: string }) {
   const { t } = useTranslation();
   const subtitle = [
-    album.artist ?? t('common.unknownArtist'),
+    albumArtistLabel(album, t),
     album.year === null ? null : String(album.year),
     t('common.tracks', { count: album.trackCount }),
   ]
@@ -25,7 +31,7 @@ export function AlbumRow({ album, testID }: { album: Album; testID?: string }) {
       title={album.name}
       subtitle={subtitle}
       leading={<Artwork source={albumArtworkSource(album)} size={48} fallback="album" />}
-      onPress={() => openAlbum(album.name, album.artist)}
+      onPress={() => openAlbum(album.key)}
     />
   );
 }

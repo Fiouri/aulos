@@ -61,7 +61,7 @@ function itemKey(item: Item): string {
     case 'song':
       return `s:${item.track.id}`;
     case 'album':
-      return `a:${item.album.name}|${item.album.artist ?? ''}`;
+      return `a:${item.album.key}`;
     case 'artist':
       return `r:${item.artist.name}`;
     case 'playlist':

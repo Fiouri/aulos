@@ -4,8 +4,9 @@
 
 .DESCRIPTION
   standard  Greek album (Μάνος Χατζιδάκις, titles with tonos, cover art), a 3-track gapless FLAC
-            album cut from one continuous tone at sample boundaries, and a two-disc album with
-            accented Latin tags and a year.
+            album cut from one continuous tone at sample boundaries, a two-disc album with
+            accented Latin tags and a year, and a 4-track album with featured artists and no
+            album artist tag (14 tracks).
   bulk      standard plus 2,000 short tracks (200 albums of 10) for the performance run.
   clean     Removes /sdcard/Music/AulosTest from the device and rescans.
 
@@ -101,7 +102,8 @@ function New-StandardSet([string]$Root) {
   $greek = Join-Path $Root 'Hadjidakis'
   $gapless = Join-Path $Root 'Gapless'
   $latin = Join-Path $Root 'Accents'
-  New-Item -ItemType Directory -Force -Path $greek, $gapless, $latin | Out-Null
+  $featuring = Join-Path $Root 'Featuring'
+  New-Item -ItemType Directory -Force -Path $greek, $gapless, $latin, $featuring | Out-Null
 
   # Greek album: tonos, dialytika and final sigma in the tags; cover art for the artwork path.
   $cover = Join-Path $Root 'cover-greek.png'
@@ -163,6 +165,19 @@ function New-StandardSet([string]$Root) {
     } $latinCover
   }
   Remove-Item $cover, $latinCover
+
+  # Album with featured artists and no album artist tag: must stay one album in the library,
+  # shown under the artist of half of its tracks.
+  $featured = @('Aulos Crew', 'Aulos Crew feat. Δέλτα', 'Aulos Crew', 'Aulos Crew feat. Echo')
+  for ($i = 0; $i -lt $featured.Count; $i++) {
+    New-Mp3 (Join-Path $featuring ('{0:D2}.mp3' -f ($i + 1))) (523 + 20 * $i) 2 @{
+      title  = "Feature Track $($i + 1)"
+      artist = $featured[$i]
+      album  = 'Featuring Tape'
+      track  = "$($i + 1)/$($featured.Count)"
+      date   = '2026'
+    }
+  }
 }
 
 function New-BulkSet([string]$Root) {

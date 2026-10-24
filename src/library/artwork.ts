@@ -1,5 +1,3 @@
-import { albumKey } from './queries';
-
 /** Thumbnail sizes requested from native, so nearby display sizes share one cached file. */
 export const ARTWORK_BUCKETS = [128, 256, 512, 1024] as const;
 const LARGEST_BUCKET = 1024;
@@ -16,25 +14,20 @@ export interface ArtworkSource {
 
 /** Tracks of one album share artwork; a track without an album stands alone. */
 export function trackArtworkSource(track: {
-  album: string | null;
-  albumArtist: string | null;
-  artist: string | null;
+  albumKey: string | null;
   localPath: string | null;
 }): ArtworkSource | null {
   if (!track.localPath) return null;
-  const key = track.album
-    ? `album:${albumKey(track.album, track.albumArtist ?? track.artist)}`
-    : `track:${track.localPath}`;
+  const key = track.albumKey ? `album:${track.albumKey}` : `track:${track.localPath}`;
   return { key, contentUri: track.localPath };
 }
 
 export function albumArtworkSource(album: {
-  name: string;
-  artist: string | null;
+  key: string;
   samplePath: string | null;
 }): ArtworkSource | null {
   if (!album.samplePath) return null;
-  return { key: `album:${albumKey(album.name, album.artist)}`, contentUri: album.samplePath };
+  return { key: `album:${album.key}`, contentUri: album.samplePath };
 }
 
 export type ArtworkLoader = (contentUri: string, sizePx: number) => Promise<string | null>;
