@@ -3,7 +3,9 @@
 # `adb shell dumpsys media_session` after 15 min 5 s: the state must be PAUSED.
 appId: com.anywecon.aulos
 ---
-- launchApp
+# Bring the running app forward; the default launchApp would stop it (and the music).
+- launchApp:
+    stopApp: false
 - tapOn:
     id: 'mini-player'
 - assertVisible: 'Pause'

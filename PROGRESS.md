@@ -1,6 +1,6 @@
-**Current:** M0 Foundation — done; gate passed on the S23
-**Next step:** Owner reviews M0 (SESSIONS.md), then start M1 Offline player (prompt for M1)
-**Last session:** 2026-10-23 — M0 built; typecheck, lint (0 warnings), 46 tests, Gradle lint + assembleRelease, Maestro m0-launch on S23 all pass
+**Current:** M1 Offline player — built; API 31 emulator gate green; S23 performance, soak and final suite pending
+**Next step:** Owner unlocks the S23 (it locked during a screen-off test), then the agent runs the S23 bulk scan, cold start, full Maestro suite, sleep timer and 60 min soak
+**Last session:** 2026-10-24 — M1 implemented; typecheck, lint, 153 tests, R8 release build, 8/8 Maestro flows on API 31; S23: 8 flows passed, notification/lock screen/media keys verified
 
 ## M0 Foundation (closed 2026-10-23)
 
