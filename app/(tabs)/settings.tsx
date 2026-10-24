@@ -4,12 +4,15 @@ import { useTranslation } from 'react-i18next';
 import { Pressable, StyleSheet, View } from 'react-native';
 
 import { useDb } from '@/db/DbProvider';
+import { useDownloadsStore } from '@/stores/downloads';
 import { useLibraryStore } from '@/stores/library';
 import { THEME_PREFERENCES, useSettingsStore, type ThemePreference } from '@/stores/settings';
 import { AppText } from '@/ui/AppText';
 import { Card } from '@/ui/Card';
+import { formatBytes } from '@/ui/format';
 import { Icon } from '@/ui/Icon';
 import { MiniPlayer } from '@/ui/MiniPlayer';
+import { openDownloads, openSources } from '@/ui/navigation';
 import { Screen } from '@/ui/Screen';
 import { Spacing, useColors } from '@/ui/theme';
 
@@ -25,6 +28,8 @@ export default function SettingsScreen() {
   const colors = useColors();
   const theme = useSettingsStore((s) => s.theme);
   const excludedCount = useLibraryStore((s) => s.excludedFolders.length);
+  const usedBytes = useDownloadsStore((s) => s.usedBytes);
+  const limitBytes = useSettingsStore((s) => s.downloads.limitBytes);
   const version = Constants.expoConfig?.version ?? '–';
 
   return (
@@ -70,6 +75,37 @@ export default function SettingsScreen() {
                 {excludedCount > 0
                   ? t('settings.foldersSummary', { count: excludedCount })
                   : t('settings.foldersNoneExcluded')}
+              </AppText>
+            </View>
+          </Pressable>
+        </Card>
+
+        <Card>
+          <AppText variant="heading">{t('settings.sources')}</AppText>
+          <Pressable
+            testID="settings-sources"
+            accessibilityRole="button"
+            onPress={openSources}
+            style={styles.link}>
+            <Icon name="public" color={colors.textSecondary} />
+            <View style={styles.fill}>
+              <AppText>{t('settings.sources')}</AppText>
+              <AppText variant="secondary">{t('settings.sourcesSummary')}</AppText>
+            </View>
+          </Pressable>
+          <Pressable
+            testID="settings-downloads"
+            accessibilityRole="button"
+            onPress={openDownloads}
+            style={styles.link}>
+            <Icon name="download" color={colors.textSecondary} />
+            <View style={styles.fill}>
+              <AppText>{t('settings.downloads')}</AppText>
+              <AppText variant="secondary">
+                {t('downloads.storage', {
+                  used: formatBytes(usedBytes),
+                  limit: formatBytes(limitBytes),
+                })}
               </AppText>
             </View>
           </Pressable>

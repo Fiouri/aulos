@@ -5,6 +5,19 @@ export function openAlbum(key: string): void {
   router.push({ pathname: '/album', params: { key } });
 }
 
+/** A provider's album that is not in the library (an Internet Archive item). */
+export function openRemoteAlbum(provider: string, ref: string): void {
+  router.push({ pathname: '/album', params: { provider, ref } });
+}
+
+export function openDownloads(): void {
+  router.push('/downloads');
+}
+
+export function openSources(): void {
+  router.push('/sources');
+}
+
 export function openArtist(name: string): void {
   router.push({ pathname: '/artist', params: { name } });
 }

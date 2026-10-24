@@ -2,8 +2,8 @@ import { FlashList } from '@shopify/flash-list';
 import { useState, type ReactElement } from 'react';
 import { StyleSheet, View } from 'react-native';
 
-import type { Track } from '@/library/queries';
 import { currentEntry } from '@/player/queue';
+import { isStoredTrack, type TrackItem } from '@/providers/types';
 import { usePlayerStore } from '@/stores/player';
 
 import { AppText } from './AppText';
@@ -12,16 +12,18 @@ import { SelectionBar } from './SelectionBar';
 import { TrackMenu } from './TrackMenu';
 import { TrackRow } from './TrackRow';
 import { Spacing } from './theme';
+import { useTrackActions } from './useTrackActions';
 
-interface TrackListProps {
-  tracks: readonly Track[];
+interface TrackListProps<T extends TrackItem> {
+  /** Stored tracks, or remote ones that are stored when the user acts on them. */
+  tracks: readonly T[];
   header?: ReactElement | null;
   emptyText?: string;
   /** Show the tag track number instead of artwork. */
   numbered?: boolean;
   /** Plays the list from the tapped row unless overridden. */
   onPlay?: (index: number) => void;
-  extraMenuItems?: (track: Track, index: number) => MenuItem[];
+  extraMenuItems?: (track: T, index: number) => MenuItem[];
   testIDPrefix?: string;
 }
 
@@ -29,7 +31,7 @@ interface TrackListProps {
  * Virtualised track list (FlashList) with a ⋮ menu per row and multi-select on long press:
  * selected tracks can be played next, queued or added to a playlist in one go.
  */
-export function TrackList({
+export function TrackList<T extends TrackItem>({
   tracks,
   header = null,
   emptyText,
@@ -37,10 +39,11 @@ export function TrackList({
   onPlay,
   extraMenuItems,
   testIDPrefix = 'track',
-}: TrackListProps) {
+}: TrackListProps<T>) {
+  const actions = useTrackActions();
   const currentTrackId = usePlayerStore((s) => currentEntry(s.queue)?.trackId ?? null);
   const [selected, setSelected] = useState<ReadonlySet<number> | null>(null);
-  const [menu, setMenu] = useState<{ track: Track; index: number } | null>(null);
+  const [menu, setMenu] = useState<{ track: T; index: number } | null>(null);
   const selecting = selected !== null;
 
   const toggle = (index: number) =>
@@ -53,7 +56,7 @@ export function TrackList({
 
   const play = (index: number) => {
     if (onPlay) onPlay(index);
-    else void usePlayerStore.getState().playTracks(tracks, index);
+    else void actions.play(tracks, index);
   };
 
   const selectedTracks = selected
@@ -66,7 +69,7 @@ export function TrackList({
       <FlashList
         data={tracks}
         extraData={{ selected, currentTrackId }}
-        keyExtractor={(track, index) => `${index}:${track.id}`}
+        keyExtractor={(track, index) => `${index}:${track.provider}:${track.providerRef}`}
         ListHeaderComponent={header}
         ListEmptyComponent={
           emptyText ? (
@@ -80,7 +83,7 @@ export function TrackList({
             track={item}
             testID={`${testIDPrefix}-${index}`}
             number={numbered ? item.trackNo : undefined}
-            current={item.id === currentTrackId}
+            current={isStoredTrack(item) && item.id === currentTrackId}
             selecting={selecting}
             selected={selected?.has(index) ?? false}
             onPress={() => (selecting ? toggle(index) : play(index))}

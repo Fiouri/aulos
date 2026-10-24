@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { Pressable, StyleSheet, View } from 'react-native';
 
 import { trackArtworkSource } from '@/library/artwork';
-import type { Track } from '@/library/queries';
+import { isStoredTrack, type TrackItem } from '@/providers/types';
 
 import { AppText } from './AppText';
 import { Artwork } from './Artwork';
@@ -15,7 +15,8 @@ import { Spacing, useColors } from './theme';
 export const TRACK_ROW_HEIGHT = 64;
 
 interface TrackRowProps {
-  track: Track;
+  /** A stored track, or a remote one (search results, remote albums). */
+  track: TrackItem;
   onPress: () => void;
   onLongPress?: () => void;
   onMore?: () => void;
@@ -72,7 +73,7 @@ export function TrackRow({
           {number ?? ''}
         </AppText>
       ) : (
-        <Artwork source={trackArtworkSource(track)} size={48} />
+        <Artwork source={isStoredTrack(track) ? trackArtworkSource(track) : null} size={48} />
       )}
       <View style={styles.text}>
         <AppText numberOfLines={1} style={current ? { color: colors.accent } : undefined}>

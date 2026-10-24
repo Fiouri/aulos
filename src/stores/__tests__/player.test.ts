@@ -12,7 +12,9 @@ import { listSongs, type Track } from '../../library/queries';
 import { scanLibrary } from '../../library/scan';
 import { parsePersistedQueue, QUEUE_KV_KEY } from '../../player/persistence';
 import { currentEntry } from '../../player/queue';
-import { currentTrack, usePlayerStore, type PlayerDeps } from '../player';
+import { storeTracks } from '../../providers/store';
+import type { RemoteTrack } from '../../providers/types';
+import { currentTrack, usePlayerStore, type PlayerInitDeps } from '../player';
 
 jest.mock('expo-audio', () => ({}));
 jest.mock('../../../modules/media-store', () => ({
@@ -32,10 +34,16 @@ describe('player store', () => {
   let clock: number;
   let toasts: string[];
   let missing: Set<string>;
+  let online: boolean;
 
-  const deps = (): Partial<PlayerDeps> => ({
+  const deps = (): PlayerInitDeps => ({
     backend: fake,
     checkFiles: async (uris) => uris.map((u) => !missing.has(u)),
+    resolveStream: async (track) => {
+      if (track.providerRef.includes('gone')) throw new Error('not found');
+      return `https://archive.org/download/${track.providerRef}`;
+    },
+    isOnline: async () => online,
     artworkFor: async () => null,
     toast: (m) => toasts.push(m),
     now: () => clock,
@@ -64,6 +72,7 @@ describe('player store', () => {
     clock = 1_000_000;
     toasts = [];
     missing = new Set();
+    online = true;
     usePlayerStore.setState(usePlayerStore.getInitialState(), true);
     await player().init(db, deps());
   });
@@ -134,6 +143,64 @@ describe('player store', () => {
     fake.autoAdvance();
     await flush();
     expect(title()).toBe('C');
+  });
+
+  const remote = (ref: string, title: string): RemoteTrack => ({
+    provider: 'archive',
+    providerRef: ref,
+    title,
+    artist: 'Artist',
+    album: 'Item',
+    albumArtist: null,
+    trackNo: null,
+    discNo: null,
+    durationMs: 180_000,
+    albumRef: 'item',
+    licenseUrl: null,
+    attribution: null,
+  });
+
+  it('streams remote tracks and plays downloaded ones from their file, in one queue', async () => {
+    const [streamed, downloaded] = await storeTracks(db, [
+      remote('item/one.mp3', 'Streamed'),
+      remote('item/two.mp3', 'Downloaded'),
+    ]);
+    await db.run('UPDATE tracks SET local_path = ? WHERE id = ?', [
+      'file:///data/downloads/0123.mp3',
+      downloaded?.id ?? 0,
+    ]);
+    const [local] = tracks;
+    const [downloadedTrack] = await storeTracks(db, downloaded ? [downloaded] : []);
+    if (!local || !streamed || !downloadedTrack) throw new Error('fixture');
+    await player().playTracks([local, streamed, downloadedTrack], 0);
+    expect(player().queue.entries).toHaveLength(3);
+    expect([...fake.uris.values()]).toEqual([
+      local.localPath,
+      'https://archive.org/download/item/one.mp3',
+      'file:///data/downloads/0123.mp3',
+    ]);
+  });
+
+  it('skips streaming-only tracks while offline and keeps playing the rest', async () => {
+    online = false;
+    const [streamed] = await storeTracks(db, [remote('item/one.mp3', 'Streamed')]);
+    const [a, b] = tracks;
+    if (!a || !b || !streamed) throw new Error('fixture');
+    await player().playTracks([a, streamed, b], 0);
+    expect(toasts).toEqual(['Not available offline: “Streamed”.']);
+    expect(player().queue.entries.map((e) => e.trackId)).toEqual([a.id, b.id]);
+    fake.autoAdvance();
+    await flush();
+    expect(title()).toBe('B');
+  });
+
+  it('skips a remote track whose stream cannot be resolved', async () => {
+    const [gone] = await storeTracks(db, [remote('item/gone.mp3', 'Gone')]);
+    const [a] = tracks;
+    if (!a || !gone) throw new Error('fixture');
+    await player().playTracks([gone, a], 0);
+    expect(toasts).toEqual(['Skipped “Gone”: it could not be played.']);
+    expect(title()).toBe('A');
   });
 
   it('skips an unplayable file reported by the player', async () => {

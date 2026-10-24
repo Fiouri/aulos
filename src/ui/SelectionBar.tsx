@@ -1,7 +1,8 @@
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, View } from 'react-native';
 
-import type { Track } from '@/library/queries';
+import { LOCAL_PROVIDER } from '@/library/providers';
+import type { TrackItem } from '@/providers/types';
 
 import { AppText } from './AppText';
 import { IconButton } from './IconButton';
@@ -9,7 +10,7 @@ import { Spacing, useColors } from './theme';
 import { useTrackActions } from './useTrackActions';
 
 interface SelectionBarProps {
-  tracks: readonly Track[];
+  tracks: readonly TrackItem[];
   onDone: () => void;
 }
 
@@ -52,6 +53,14 @@ export function SelectionBar({ tracks, onDone }: SelectionBarProps) {
         onPress={run(() => actions.addToPlaylist(tracks))}
         testID="selection-add-to-playlist"
       />
+      {tracks.some((track) => track.provider !== LOCAL_PROVIDER) && (
+        <IconButton
+          icon="download"
+          label={t('track.download')}
+          onPress={run(() => actions.download(tracks))}
+          testID="selection-download"
+        />
+      )}
     </View>
   );
 }

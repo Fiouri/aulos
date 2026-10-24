@@ -7,6 +7,7 @@ import type { Db } from '@/db/types';
 import { i18n } from '@/i18n';
 import { trackArtworkSource } from '@/library/artwork';
 import { artworkCache } from '@/library/artworkCache';
+import { LOCAL_PROVIDER } from '@/library/providers';
 import { getTracks, type Track } from '@/library/queries';
 import {
   createSaveThrottle,
@@ -50,9 +51,23 @@ const NOW_PLAYING_ARTWORK_PX = 512;
 const SLEEP_CHECK_INTERVAL_MS = 1000;
 const NEXT_REPEAT: Record<RepeatMode, RepeatMode> = { off: 'all', all: 'one', one: 'off' };
 
+interface Skip {
+  key: number;
+  reason: 'missing' | 'offline' | 'unplayable';
+}
+
+const SKIP_MESSAGES = {
+  missing: 'player.skippedMissing',
+  offline: 'player.notAvailableOffline',
+  unplayable: 'player.skippedUnplayable',
+} as const;
+
 export interface PlayerDeps {
   backend: PlayerBackend;
   checkFiles: (contentUris: string[]) => Promise<boolean[]>;
+  /** Stream URL of a track without a file on the device, from its provider. */
+  resolveStream: (track: Track) => Promise<string>;
+  isOnline: () => Promise<boolean>;
   artworkFor: (track: Track) => Promise<string | null>;
   toast: (message: string) => void;
   now: () => number;
@@ -64,10 +79,15 @@ async function nowPlayingArtwork(track: Track): Promise<string | null> {
   return source ? artworkCache.get(source, NOW_PLAYING_ARTWORK_PX) : null;
 }
 
-function withDefaults(deps: Partial<PlayerDeps> = {}): PlayerDeps {
+/** Stream resolution and connectivity come from the app (providers), everything else has a default. */
+export type PlayerInitDeps = Partial<PlayerDeps> & Pick<PlayerDeps, 'resolveStream' | 'isOnline'>;
+
+function withDefaults(deps: PlayerInitDeps): PlayerDeps {
   return {
     backend: deps.backend ?? new PlayerService(),
     checkFiles: deps.checkFiles ?? checkFiles,
+    resolveStream: deps.resolveStream,
+    isOnline: deps.isOnline,
     artworkFor: deps.artworkFor ?? nowPlayingArtwork,
     toast: deps.toast ?? showToast,
     now: deps.now ?? Date.now,
@@ -86,8 +106,8 @@ interface Runtime {
   /** Serialises history writes so an 'end' always sees the row its 'count' inserted. */
   historyChain: Promise<void>;
   historyId: number | null;
-  /** Entry keys whose file was found readable. */
-  checked: Set<number>;
+  /** What the native player plays for an entry key: a readable file or a resolved stream. */
+  resolved: Map<number, string>;
   sleepInterval: ReturnType<typeof setInterval> | null;
 }
 
@@ -105,7 +125,7 @@ export interface PlayerState {
   /** The saved queue has been restored (or there was none). */
   ready: boolean;
 
-  init(db: Db, deps?: Partial<PlayerDeps>): Promise<void>;
+  init(db: Db, deps: PlayerInitDeps): Promise<void>;
   playTracks(tracks: readonly Track[], startIndex: number): Promise<void>;
   /** Turns shuffle on and plays the list from a random track. */
   shuffleTracks(tracks: readonly Track[]): Promise<void>;
@@ -178,8 +198,46 @@ export const usePlayerStore = create<PlayerState>()((set, get) => {
   };
 
   /**
-   * Brings the native playlist in line with the queue. Files entering the window are checked
-   * first; missing ones are skipped with a toast and dropped from the queue.
+   * What to play for entries entering the window, stored in the runtime: a file on the device
+   * when it is readable (local files and downloads), otherwise the provider's stream resolved
+   * now. Returns the entries that cannot play: a local file that is gone, a streaming-only
+   * track while offline, or a stream the provider cannot resolve.
+   */
+  const resolveSources = async (r: Runtime, keys: readonly number[]): Promise<Skip[]> => {
+    const skipped: Skip[] = [];
+    const withFile = keys.filter((k) => trackOf(k)?.localPath);
+    const readable =
+      withFile.length > 0
+        ? await r.deps.checkFiles(withFile.map((k) => trackOf(k)?.localPath ?? ''))
+        : [];
+    withFile.forEach((k, i) => {
+      if (readable[i]) r.resolved.set(k, trackOf(k)?.localPath ?? '');
+    });
+    let online: boolean | null = null;
+    for (const key of keys) {
+      if (r.resolved.has(key)) continue;
+      const track = trackOf(key);
+      if (!track || track.provider === LOCAL_PROVIDER) {
+        skipped.push({ key, reason: 'missing' });
+        continue;
+      }
+      online ??= await r.deps.isOnline();
+      if (!online) {
+        skipped.push({ key, reason: 'offline' });
+        continue;
+      }
+      try {
+        r.resolved.set(key, await r.deps.resolveStream(track));
+      } catch {
+        skipped.push({ key, reason: 'unplayable' });
+      }
+    }
+    return skipped;
+  };
+
+  /**
+   * Brings the native playlist in line with the queue. Entries entering the window are
+   * resolved first; those that cannot play are skipped with a toast and dropped from the queue.
    */
   const syncWindow = (options: { reload?: boolean; positionSec?: number } = {}) => {
     const r = rt();
@@ -192,30 +250,20 @@ export const usePlayerStore = create<PlayerState>()((set, get) => {
           set({ playing: false, buffering: false, positionSec: 0, durationSec: 0 });
           return;
         }
-        const unchecked = desired.keys.filter((k) => !r.checked.has(k));
-        const paths = unchecked.map((k) => trackOf(k)?.localPath ?? null);
-        const toCheck = paths.filter((p): p is string => p !== null);
-        const readable = toCheck.length > 0 ? await r.deps.checkFiles(toCheck) : [];
-        let checkedIndex = 0;
-        const missing = unchecked.filter((_, i) => {
-          if (paths[i] === null) return true;
-          const ok = readable[checkedIndex] ?? false;
-          checkedIndex += 1;
-          return !ok;
-        });
+        const unresolved = desired.keys.filter((k) => !r.resolved.has(k));
+        const skipped = await resolveSources(r, unresolved);
         if (get().queue !== queue) continue;
-        if (missing.length > 0) {
+        if (skipped.length > 0) {
           let next = queue;
-          for (const key of missing) {
+          for (const { key, reason } of skipped) {
             const track = trackOf(key);
-            if (track) r.deps.toast(i18n.t('player.skippedMissing', { title: track.title }));
+            if (track) r.deps.toast(i18n.t(SKIP_MESSAGES[reason], { title: track.title }));
             next = removeEntry(next, key);
           }
           set({ queue: next });
           continue;
         }
-        unchecked.forEach((k) => r.checked.add(k));
-        const uris = new Map(desired.keys.map((k) => [k, trackOf(k)?.localPath ?? '']));
+        const uris = new Map(desired.keys.map((k) => [k, r.resolved.get(k) ?? '']));
         if (options.reload) r.deps.backend.load(desired, uris, options.positionSec ?? 0);
         else r.deps.backend.sync(desired, uris);
         return;
@@ -300,7 +348,7 @@ export const usePlayerStore = create<PlayerState>()((set, get) => {
     const track = key === null ? null : trackOf(key);
     if (key === null || !track) return;
     r.deps.toast(i18n.t('player.skippedUnplayable', { title: track.title }));
-    r.checked.delete(key);
+    r.resolved.delete(key);
     const wasPlaying = get().playing;
     set({ queue: removeEntry(get().queue, key) });
     await syncWindow({ reload: true });
@@ -381,7 +429,7 @@ export const usePlayerStore = create<PlayerState>()((set, get) => {
         syncChain: Promise.resolve(),
         historyChain: Promise.resolve(),
         historyId: null,
-        checked: new Set(),
+        resolved: new Map(),
         sleepInterval: null,
       };
       const r = runtime;

@@ -47,6 +47,8 @@ interface LibraryState {
   loaded: boolean;
   /** Bumped after every scan that changed the library, so open lists reload. */
   revision: number;
+  /** The library changed outside a scan (a download completed or was deleted). */
+  touch(): void;
   /** Restores the persisted count, last scan and exclusions; reads the permission silently. */
   load(db: Db): Promise<void>;
   /** Prompts for audio access; returns true when granted. */
@@ -69,6 +71,10 @@ export const useLibraryStore = create<LibraryState>()((set, get) => ({
   excludedFolders: [],
   loaded: false,
   revision: 0,
+
+  touch() {
+    set((s) => ({ revision: s.revision + 1 }));
+  },
 
   async load(db) {
     const [granted, totalTracks, stored, excluded] = await Promise.all([

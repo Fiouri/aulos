@@ -8,13 +8,22 @@ import { TabScreen } from '@/ui/Layouts';
 import { LibraryStatus } from '@/ui/LibraryStatus';
 import { AlbumsSection } from '@/ui/library/AlbumsSection';
 import { ArtistsSection } from '@/ui/library/ArtistsSection';
+import { DownloadsSection } from '@/ui/library/DownloadsSection';
 import { FavoritesSection } from '@/ui/library/FavoritesSection';
 import { PlaylistsSection } from '@/ui/library/PlaylistsSection';
 import { RecentSection } from '@/ui/library/RecentSection';
 import { SongsSection } from '@/ui/library/SongsSection';
 import { Spacing } from '@/ui/theme';
 
-const SECTIONS = ['songs', 'albums', 'artists', 'playlists', 'favorites', 'recent'] as const;
+const SECTIONS = [
+  'songs',
+  'albums',
+  'artists',
+  'playlists',
+  'favorites',
+  'recent',
+  'downloads',
+] as const;
 type Section = (typeof SECTIONS)[number];
 
 export default function LibraryScreen() {
@@ -43,6 +52,7 @@ export default function LibraryScreen() {
       {section === 'playlists' && <PlaylistsSection header={header} />}
       {section === 'favorites' && <FavoritesSection header={header} />}
       {section === 'recent' && <RecentSection header={header} />}
+      {section === 'downloads' && <DownloadsSection header={header} />}
     </TabScreen>
   );
 }

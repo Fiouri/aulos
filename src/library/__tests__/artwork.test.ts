@@ -73,5 +73,7 @@ describe('artwork cache', () => {
     expect(trackArtworkSource({ ...base, albumKey: null })?.key).toBe('track:content://media/1');
     expect(trackArtworkSource({ ...base, localPath: null })).toBeNull();
     expect(albumArtworkSource({ key: '["local","7"]', samplePath: null })).toBeNull();
+    // Downloads live in app storage, outside the MediaStore that holds artwork.
+    expect(trackArtworkSource({ ...base, localPath: 'file:///data/downloads/a.mp3' })).toBeNull();
   });
 });

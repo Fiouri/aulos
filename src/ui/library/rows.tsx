@@ -4,11 +4,12 @@ import { useTranslation } from 'react-i18next';
 import type { Playlist } from '@/collections/playlists';
 import { albumArtworkSource } from '@/library/artwork';
 import type { Album, Artist } from '@/library/queries';
+import { isRemoteAlbum, type AlbumItem, type RemoteAlbum } from '@/providers/types';
 
 import { Artwork } from '../Artwork';
 import { Icon } from '../Icon';
 import { ListRow } from '../ListRow';
-import { openAlbum, openArtist, openPlaylist } from '../navigation';
+import { openAlbum, openArtist, openPlaylist, openRemoteAlbum } from '../navigation';
 import { useColors } from '../theme';
 
 export function albumArtistLabel(album: Pick<Album, 'artist' | 'various'>, t: TFunction): string {
@@ -16,7 +17,35 @@ export function albumArtistLabel(album: Pick<Album, 'artist' | 'various'>, t: TF
   return album.artist ?? t('common.unknownArtist');
 }
 
-export function AlbumRow({ album, testID }: { album: Album; testID?: string }) {
+/** A library album, or a provider's album (opened from the provider, not the library). */
+export function AlbumRow({ album, testID }: { album: AlbumItem; testID?: string }) {
+  return isRemoteAlbum(album) ? (
+    <RemoteAlbumRow album={album} testID={testID} />
+  ) : (
+    <LibraryAlbumRow album={album} testID={testID} />
+  );
+}
+
+function RemoteAlbumRow({ album, testID }: { album: RemoteAlbum; testID?: string }) {
+  const { t } = useTranslation();
+  const subtitle = [
+    album.artist ?? t('common.unknownArtist'),
+    album.year === null ? null : String(album.year),
+  ]
+    .filter(Boolean)
+    .join(' · ');
+  return (
+    <ListRow
+      testID={testID}
+      title={album.name}
+      subtitle={subtitle}
+      leading={<Artwork source={null} size={48} fallback="album" />}
+      onPress={() => openRemoteAlbum(album.provider, album.ref)}
+    />
+  );
+}
+
+function LibraryAlbumRow({ album, testID }: { album: Album; testID?: string }) {
   const { t } = useTranslation();
   const subtitle = [
     albumArtistLabel(album, t),

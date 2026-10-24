@@ -1,27 +1,42 @@
+import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import { trackFavoriteKey } from '@/collections/favorites';
-import type { Track } from '@/library/queries';
+import { LOCAL_PROVIDER } from '@/library/providers';
+import { enabledProvider } from '@/providers/appProviders';
+import { isStoredTrack, type TrackItem } from '@/providers/types';
 
 import { MenuSheet, type MenuItem } from './MenuSheet';
-import { useFavorite } from './useFavorite';
+import { TrackInfoSheet } from './TrackInfoSheet';
 import { useTrackActions } from './useTrackActions';
+import { useTrackFavorite } from './useTrackFavorite';
 
-interface TrackMenuProps {
-  track: Track | null;
+interface TrackMenuProps<T extends TrackItem> {
+  track: T | null;
   onClose: () => void;
   /** Screen-specific actions (remove from playlist, …) listed after the common ones. */
   extraItems?: readonly MenuItem[];
 }
 
-/** The ⋮ menu of a track row. */
-export function TrackMenu({ track, onClose, extraItems = [] }: TrackMenuProps) {
+/** The ⋮ menu of a track row, for stored and remote tracks alike. */
+export function TrackMenu<T extends TrackItem>({
+  track,
+  onClose,
+  extraItems = [],
+}: TrackMenuProps<T>) {
   const { t } = useTranslation();
   const actions = useTrackActions();
-  const [favorite, toggleFavorite] = useFavorite(
-    'track',
-    track ? trackFavoriteKey(track.id) : null,
-  );
+  const [favorite, toggleFavorite] = useTrackFavorite(track);
+  const [info, setInfo] = useState<TrackItem | null>(null);
+
+  const inLibrary = track !== null && isStoredTrack(track) && track.localPath !== null;
+  const downloadable =
+    track !== null &&
+    track.provider !== LOCAL_PROVIDER &&
+    !inLibrary &&
+    enabledProvider(track.provider)?.capabilities.includes('download') === true;
+  const hasAlbum =
+    track !== null &&
+    (inLibrary ? isStoredTrack(track) && track.albumKey !== null : track.albumRef !== null);
 
   const items: MenuItem[] = track
     ? [
@@ -41,7 +56,7 @@ export function TrackMenu({ track, onClose, extraItems = [] }: TrackMenuProps) {
           label: t('track.addToPlaylist'),
           icon: 'playlist_add',
           testID: 'menu-add-to-playlist',
-          onPress: () => actions.addToPlaylist([track]),
+          onPress: () => void actions.addToPlaylist([track]),
         },
         {
           label: favorite ? t('track.unfavorite') : t('track.favorite'),
@@ -50,7 +65,17 @@ export function TrackMenu({ track, onClose, extraItems = [] }: TrackMenuProps) {
           testID: 'menu-favorite',
           onPress: toggleFavorite,
         },
-        ...(track.albumKey !== null
+        ...(downloadable
+          ? [
+              {
+                label: t('track.download'),
+                icon: 'download' as const,
+                testID: 'menu-download',
+                onPress: () => void actions.download([track]),
+              },
+            ]
+          : []),
+        ...(hasAlbum
           ? [
               {
                 label: t('track.goToAlbum'),
@@ -60,7 +85,7 @@ export function TrackMenu({ track, onClose, extraItems = [] }: TrackMenuProps) {
               },
             ]
           : []),
-        ...(track.artist !== null
+        ...(inLibrary && track.artist !== null
           ? [
               {
                 label: t('track.goToArtist'),
@@ -70,11 +95,20 @@ export function TrackMenu({ track, onClose, extraItems = [] }: TrackMenuProps) {
               },
             ]
           : []),
+        {
+          label: t('track.info'),
+          icon: 'info',
+          testID: 'menu-info',
+          onPress: () => setInfo(track),
+        },
         ...extraItems,
       ]
     : [];
 
   return (
-    <MenuSheet visible={track !== null} title={track?.title} items={items} onClose={onClose} />
+    <>
+      <MenuSheet visible={track !== null} title={track?.title} items={items} onClose={onClose} />
+      <TrackInfoSheet track={info} onClose={() => setInfo(null)} />
+    </>
   );
 }

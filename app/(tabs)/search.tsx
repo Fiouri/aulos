@@ -4,33 +4,50 @@ import { useTranslation } from 'react-i18next';
 import { StyleSheet, TextInput, View } from 'react-native';
 
 import type { Playlist } from '@/collections/playlists';
-import { useDb } from '@/db/DbProvider';
-import type { Album, Artist, Track } from '@/library/queries';
+import type { Artist } from '@/library/queries';
+import { LOCAL_PROVIDER } from '@/library/providers';
+import { isAbortError } from '@/net/errors';
 import { currentEntry } from '@/player/queue';
-import { searchLibrary, type SearchResults } from '@/search/search';
+import { providers } from '@/providers/appProviders';
+import {
+  isRemoteAlbum,
+  isStoredTrack,
+  type AlbumItem,
+  type SearchResult,
+  type SearchType,
+  type TrackItem,
+} from '@/providers/types';
 import { useCollectionsStore } from '@/stores/collections';
 import { useLibraryStore } from '@/stores/library';
+import { useNetworkStore } from '@/stores/network';
 import { usePlayerStore } from '@/stores/player';
+import { useSettingsStore } from '@/stores/settings';
 import { AppText } from '@/ui/AppText';
+import { Chips, type Chip } from '@/ui/Chips';
+import { providerErrorMessage, providerName } from '@/ui/errors';
 import { IconButton } from '@/ui/IconButton';
 import { TabScreen } from '@/ui/Layouts';
 import { AlbumRow, ArtistRow, PlaylistRow } from '@/ui/library/rows';
 import { Spacing, useColors } from '@/ui/theme';
 import { TrackMenu } from '@/ui/TrackMenu';
 import { TrackRow } from '@/ui/TrackRow';
+import { useTrackActions } from '@/ui/useTrackActions';
 
-/** Results appear this long after the last keystroke. */
-const DEBOUNCE_MS = 150;
+/** Results appear this long after the last keystroke: instant for the library, gentler on a
+ * remote service. */
+const DEBOUNCE_MS = { local: 150, remote: 400 } as const;
+const RESULT_LIMIT = 50;
+const ALL_TYPES: readonly SearchType[] = ['tracks', 'albums', 'artists', 'playlists'];
 
 type Item =
   | { type: 'heading'; title: string }
-  | { type: 'song'; track: Track; index: number }
-  | { type: 'album'; album: Album; index: number }
+  | { type: 'song'; track: TrackItem; index: number }
+  | { type: 'album'; album: AlbumItem; index: number }
   | { type: 'artist'; artist: Artist; index: number }
   | { type: 'playlist'; playlist: Playlist; index: number };
 
 function toItems(
-  results: SearchResults,
+  results: SearchResult,
   t: (key: `search.${'songs' | 'albums' | 'artists' | 'playlists'}`) => string,
 ): Item[] {
   const items: Item[] = [];
@@ -39,7 +56,7 @@ function toItems(
     items.push({ type: 'heading', title });
     rows.forEach((row, index) => items.push(make(row, index)));
   };
-  group(t('search.songs'), results.songs, (track, index) => ({ type: 'song', track, index }));
+  group(t('search.songs'), results.tracks, (track, index) => ({ type: 'song', track, index }));
   group(t('search.albums'), results.albums, (album, index) => ({ type: 'album', album, index }));
   group(t('search.artists'), results.artists, (artist, index) => ({
     type: 'artist',
@@ -59,9 +76,11 @@ function itemKey(item: Item): string {
     case 'heading':
       return `h:${item.title}`;
     case 'song':
-      return `s:${item.track.id}`;
+      return `s:${item.track.provider}:${item.track.providerRef}`;
     case 'album':
-      return `a:${item.album.key}`;
+      return isRemoteAlbum(item.album)
+        ? `a:${item.album.provider}:${item.album.ref}`
+        : `a:${item.album.key}`;
     case 'artist':
       return `r:${item.artist.name}`;
     case 'playlist':
@@ -69,37 +88,80 @@ function itemKey(item: Item): string {
   }
 }
 
+type Found =
+  | { source: string; query: string; results: SearchResult }
+  | { source: string; query: string; error: unknown };
+
+/**
+ * One search box for every searchable provider: the library (default, offline, accent-blind)
+ * and the remote sources switched on in Settings → Sources.
+ */
 export default function SearchScreen() {
   const { t } = useTranslation();
   const colors = useColors();
-  const db = useDb();
+  const actions = useTrackActions();
   const libraryRevision = useLibraryStore((s) => s.revision);
   const collectionsRevision = useCollectionsStore((s) => s.revision);
+  const disabledProviders = useSettingsStore((s) => s.disabledProviders);
+  const online = useNetworkStore((s) => s.status.online);
   const currentTrackId = usePlayerStore((s) => currentEntry(s.queue)?.trackId ?? null);
+  const [chosenSource, setSource] = useState(LOCAL_PROVIDER);
   const [query, setQuery] = useState('');
   const [debounced, setDebounced] = useState('');
-  const [found, setFound] = useState<{ query: string; results: SearchResults } | null>(null);
-  const [menu, setMenu] = useState<Track | null>(null);
+  const [found, setFound] = useState<Found | null>(null);
+  const [menu, setMenu] = useState<TrackItem | null>(null);
+
+  const searchable = providers()
+    .withCapability('search')
+    .filter((p) => !disabledProviders.includes(p.id));
+  const source = searchable.some((p) => p.id === chosenSource) ? chosenSource : LOCAL_PROVIDER;
+  const remote = source !== LOCAL_PROVIDER;
+  const chips: Chip<string>[] = searchable.map((p) => ({
+    value: p.id,
+    label: providerName(t, p.id),
+  }));
 
   useEffect(() => {
-    const timer = setTimeout(() => setDebounced(query.trim()), DEBOUNCE_MS);
+    const timer = setTimeout(
+      () => setDebounced(query.trim()),
+      remote ? DEBOUNCE_MS.remote : DEBOUNCE_MS.local,
+    );
     return () => clearTimeout(timer);
-  }, [query]);
+  }, [query, remote]);
 
   useEffect(() => {
-    if (debounced === '') return;
-    let active = true;
-    void searchLibrary(db, debounced).then((results) => {
-      if (active) setFound({ query: debounced, results });
-    });
-    return () => {
-      active = false;
-    };
-  }, [db, debounced, libraryRevision, collectionsRevision]);
+    if (debounced === '' || (remote && !online)) return;
+    const provider = providers().get(source);
+    if (!provider) return;
+    const controller = new AbortController();
+    provider
+      .search(debounced, { types: ALL_TYPES, limit: RESULT_LIMIT, signal: controller.signal })
+      .then(
+        (results) => setFound({ source, query: debounced, results }),
+        (error: unknown) => {
+          if (!isAbortError(error)) setFound({ source, query: debounced, error });
+        },
+      );
+    return () => controller.abort();
+  }, [source, remote, online, debounced, libraryRevision, collectionsRevision]);
 
-  const results = debounced !== '' && found?.query === debounced ? found.results : null;
+  const current = found?.source === source && found.query === debounced ? found : null;
+  const results = current && 'results' in current ? current.results : null;
+  const error = current && 'error' in current ? current.error : null;
   const items = results ? toItems(results, t) : [];
-  const songs = results?.songs ?? [];
+  const songs = results?.tracks ?? [];
+
+  const message = (() => {
+    if (debounced === '') {
+      return { id: 'search-hint', text: remote ? t('search.remoteHint') : t('search.hint') };
+    }
+    if (remote && !online) return { id: 'search-offline', text: t('errors.offline') };
+    if (error !== null) return { id: 'search-error', text: providerErrorMessage(t, error) };
+    if (results && items.length === 0) {
+      return { id: 'search-no-results', text: t('search.noResults', { query: debounced }) };
+    }
+    return null;
+  })();
 
   return (
     <TabScreen>
@@ -107,6 +169,9 @@ export default function SearchScreen() {
         <AppText variant="title" accessibilityRole="header">
           {t('search.title')}
         </AppText>
+        {chips.length > 1 && (
+          <Chips chips={chips} value={source} onChange={setSource} testIDPrefix="search-source" />
+        )}
         <View
           style={[styles.field, { borderColor: colors.border, backgroundColor: colors.surface }]}>
           <TextInput
@@ -130,13 +195,9 @@ export default function SearchScreen() {
           )}
         </View>
       </View>
-      {debounced === '' ? (
-        <AppText variant="secondary" style={styles.message} testID="search-hint">
-          {t('search.hint')}
-        </AppText>
-      ) : results && items.length === 0 ? (
-        <AppText variant="secondary" style={styles.message} testID="search-no-results">
-          {t('search.noResults', { query: debounced })}
+      {message ? (
+        <AppText variant="secondary" style={styles.message} testID={message.id}>
+          {message.text}
         </AppText>
       ) : (
         <FlashList
@@ -158,8 +219,8 @@ export default function SearchScreen() {
                   <TrackRow
                     track={item.track}
                     testID={`search-song-${item.index}`}
-                    current={item.track.id === currentTrackId}
-                    onPress={() => void usePlayerStore.getState().playTracks(songs, item.index)}
+                    current={isStoredTrack(item.track) && item.track.id === currentTrackId}
+                    onPress={() => void actions.play(songs, item.index)}
                     onMore={() => setMenu(item.track)}
                   />
                 );

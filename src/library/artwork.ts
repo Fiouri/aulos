@@ -12,12 +12,17 @@ export interface ArtworkSource {
   contentUri: string;
 }
 
+/** Artwork is read through the MediaStore, so only content:// files have it (not downloads). */
+function hasMediaStoreArtwork(uri: string | null): uri is string {
+  return uri !== null && uri.startsWith('content://');
+}
+
 /** Tracks of one album share artwork; a track without an album stands alone. */
 export function trackArtworkSource(track: {
   albumKey: string | null;
   localPath: string | null;
 }): ArtworkSource | null {
-  if (!track.localPath) return null;
+  if (!hasMediaStoreArtwork(track.localPath)) return null;
   const key = track.albumKey ? `album:${track.albumKey}` : `track:${track.localPath}`;
   return { key, contentUri: track.localPath };
 }
@@ -26,7 +31,7 @@ export function albumArtworkSource(album: {
   key: string;
   samplePath: string | null;
 }): ArtworkSource | null {
-  if (!album.samplePath) return null;
+  if (!hasMediaStoreArtwork(album.samplePath)) return null;
   return { key: `album:${album.key}`, contentUri: album.samplePath };
 }
 

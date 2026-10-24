@@ -11,7 +11,17 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { DbProvider } from '@/db/DbProvider';
 import type { Db } from '@/db/types';
 import { useOpenDb } from '@/db/useOpenDb';
+import { expoFileOps } from '@/downloads/transfer';
 import { useLibraryLifecycle } from '@/library/useLibraryLifecycle';
+import { getNetworkStatus, onNetworkChange } from '@/net/network';
+import {
+  downloadsDir,
+  enabledProvider,
+  initProviders,
+  resolveTrackStream,
+} from '@/providers/appProviders';
+import { useDownloadsStore } from '@/stores/downloads';
+import { useNetworkStore } from '@/stores/network';
 import { usePlayerStore } from '@/stores/player';
 import { useSettingsStore } from '@/stores/settings';
 import { AppText } from '@/ui/AppText';
@@ -20,14 +30,29 @@ import { Spacing, useColors } from '@/ui/theme';
 void SplashScreen.preventAutoHideAsync();
 
 /**
- * Runs before the splash hides: theme first, then the saved queue (restored paused). A player
- * that cannot restore its queue must not keep the library from opening, so that failure is
- * logged and the app starts with an empty queue.
+ * Runs before the splash hides: settings, providers, downloads, then the saved queue (restored
+ * paused). Downloads and the player must not keep the library from opening, so their failures
+ * are logged and the app starts without them.
  */
 const onDbReady = async (db: Db) => {
   await useSettingsStore.getState().load(db);
+  const registry = initProviders(db);
+  for (const id of useSettingsStore.getState().disabledProviders) registry.setEnabled(id, false);
+  await useNetworkStore.getState().start(getNetworkStatus, onNetworkChange);
   try {
-    await usePlayerStore.getState().init(db);
+    await useDownloadsStore.getState().init(db, {
+      provider: enabledProvider,
+      files: expoFileOps,
+      dir: downloadsDir(),
+    });
+  } catch (error) {
+    console.error('Downloads start failed', error);
+  }
+  try {
+    await usePlayerStore.getState().init(db, {
+      resolveStream: resolveTrackStream,
+      isOnline: async () => useNetworkStore.getState().status.online,
+    });
   } catch (error) {
     console.error('Player restore failed', error);
   }
@@ -62,6 +87,8 @@ function AppStack() {
       <Stack.Screen name="artist" options={{ title: '' }} />
       <Stack.Screen name="playlist/[id]" options={{ title: '' }} />
       <Stack.Screen name="folders" options={{ title: t('settings.folders') }} />
+      <Stack.Screen name="sources" options={{ title: t('sources.title') }} />
+      <Stack.Screen name="downloads" options={{ title: t('downloads.title') }} />
       <Stack.Screen
         name="add-to-playlist"
         options={{ title: t('playlists.chooseTitle'), presentation: 'modal' }}
