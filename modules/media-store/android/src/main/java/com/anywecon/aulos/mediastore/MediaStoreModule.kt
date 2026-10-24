@@ -10,6 +10,7 @@ import android.net.Uri
 import android.os.Build
 import android.provider.MediaStore
 import android.util.Size
+import androidx.core.net.toUri
 import expo.modules.kotlin.exception.Exceptions
 import expo.modules.kotlin.functions.Coroutine
 import expo.modules.kotlin.modules.Module
@@ -23,7 +24,7 @@ private const val ARTWORK_DIR = "artwork"
 private const val MIN_ARTWORK_PX = 32
 private const val MAX_ARTWORK_PX = 1024
 private const val ARTWORK_JPEG_QUALITY = 90
-private val LEGACY_ALBUM_ART_URI: Uri = Uri.parse("content://media/external/audio/albumart")
+private val LEGACY_ALBUM_ART_URI: Uri = "content://media/external/audio/albumart".toUri()
 
 class MediaStoreModule : Module() {
   private val context: Context
@@ -41,11 +42,11 @@ class MediaStoreModule : Module() {
     }
 
     AsyncFunction("loadArtwork") Coroutine { contentUri: String, sizePx: Int ->
-      withContext(Dispatchers.IO) { loadArtwork(Uri.parse(contentUri), sizePx) }
+      withContext(Dispatchers.IO) { loadArtwork(contentUri.toUri(), sizePx) }
     }
 
     AsyncFunction("checkFiles") Coroutine { contentUris: List<String> ->
-      withContext(Dispatchers.IO) { contentUris.map { checkFile(Uri.parse(it)) } }
+      withContext(Dispatchers.IO) { contentUris.map { checkFile(it.toUri()) } }
     }
   }
 

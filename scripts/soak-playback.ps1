@@ -9,18 +9,24 @@
   extrapolated position nor the track changed since the previous sample). Pauses playback and
   wakes the screen at the end.
 
+  -Resume skips the Maestro start and resumes the app's last queue with a media key instead,
+  which also works on a locked phone (the queue from an earlier soak-start keeps repeat all).
+
   Needs adb and maestro on PATH, the release APK installed and music on the device. Take the
-  shared-device lock first (see the project CLAUDE.md).
+  shared-device lock first (see the project CLAUDE.md). The screen-off step locks a phone that
+  has a secure lock screen.
 
 .EXAMPLE
   .\scripts\soak-playback.ps1 -Serial <device-serial>
   .\scripts\soak-playback.ps1 -Minutes 10 -IntervalSeconds 60
+  .\scripts\soak-playback.ps1 -Resume
 #>
 param(
   [string]$Serial,
   [int]$Minutes = 60,
   [int]$IntervalSeconds = 300,
-  [string]$Package = 'com.anywecon.aulos'
+  [string]$Package = 'com.anywecon.aulos',
+  [switch]$Resume
 )
 
 $ErrorActionPreference = 'Stop'
@@ -73,9 +79,14 @@ $startFlow = Join-Path $root 'scripts\soak-start.yaml'
 $maestroTarget = @()
 if ($Serial) { $maestroTarget = @('--device', $Serial) }
 
-Write-Host 'Starting playback of all songs with repeat all…'
-& maestro @maestroTarget test $startFlow
-if ($LASTEXITCODE -ne 0) { throw 'soak-start.yaml failed' }
+if ($Resume) {
+  Write-Host 'Resuming the last queue with a media key…'
+  Invoke-Adb shell input keyevent KEYCODE_MEDIA_PLAY | Out-Null
+} else {
+  Write-Host 'Starting playback of all songs with repeat all…'
+  & maestro @maestroTarget test $startFlow
+  if ($LASTEXITCODE -ne 0) { throw 'soak-start.yaml failed' }
+}
 
 Invoke-Adb shell input keyevent KEYCODE_SLEEP | Out-Null
 Start-Sleep -Seconds 5

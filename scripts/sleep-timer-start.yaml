@@ -1,0 +1,18 @@
+# Manual check helper (not part of the .maestro/ suite): with music playing, set the sleep
+# timer to 15 minutes and leave the app in the background. Then turn the screen off and check
+# `adb shell dumpsys media_session` after 15 min 5 s: the state must be PAUSED.
+appId: com.anywecon.aulos
+---
+- launchApp
+- tapOn:
+    id: 'mini-player'
+- assertVisible: 'Pause'
+- tapOn:
+    id: 'np-sleep'
+- tapOn:
+    id: 'sleep-15'
+- assertVisible:
+    id: 'sleep-status'
+- tapOn:
+    id: 'np-close'
+- pressKey: Home
