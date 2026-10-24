@@ -91,11 +91,15 @@ appId: com.anywecon.aulos
 - assertNotVisible: 'Gapless part 1'
 - back
 
-# Play: part 2 runs into part 3 by itself. Wait for the queue sheet to close first.
+# Play: part 2 runs into part 3 by itself. Wait for the queue sheet to close first. Repeat all
+# keeps the 6 s queue playing, so a slow device cannot miss the playing state.
 - extendedWaitUntil:
     visible:
       id: 'now-playing'
     timeout: 5000
+- tapOn:
+    id: 'np-repeat'
+- assertVisible: 'Repeat all'
 - tapOn:
     id: 'np-play-pause'
 - extendedWaitUntil:

@@ -263,6 +263,10 @@ describe('player store', () => {
     expect(title()).toBe('A');
     expect(player().queue.original).not.toBeNull();
     await player().cycleRepeat();
+    // Five tracks fit in the window: loaded once and looped natively, never duplicated.
+    expect(fake.loop).toBe('all');
+    expect(fake.window.keys).toHaveLength(5);
+    expect(new Set(fake.window.keys).size).toBe(5);
     await player().cycleRepeat();
     expect(fake.loop).toBe('single');
     await player().move(0, 3);

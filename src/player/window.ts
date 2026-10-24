@@ -1,3 +1,4 @@
+import type { LoopMode } from './PlayerService';
 import type { QueueState } from './queue';
 
 /**
@@ -21,6 +22,26 @@ export interface WindowOptions {
   stopAfterCurrent?: boolean;
 }
 
+/**
+ * A repeating queue that fits in the window is loaded once, in order, and looped by the native
+ * player. Wrapping it into the window instead would load the same entries several times, and
+ * the burst of native calls that needs makes media3's session controller crash ("Invalid
+ * PlayerInfo update").
+ */
+function loopsWholeQueue(state: QueueState, options: WindowOptions): boolean {
+  const { ahead = WINDOW_AHEAD, behind = WINDOW_BEHIND } = options;
+  return state.repeat !== 'off' && state.entries.length <= behind + 1 + ahead;
+}
+
+/** Native loop mode for the queue: one track, the whole loaded queue, or none. */
+export function nativeLoopMode(state: QueueState, options: WindowOptions = {}): LoopMode {
+  if (state.repeat === 'one') return 'single';
+  if (state.repeat === 'all' && !options.stopAfterCurrent && loopsWholeQueue(state, options)) {
+    return 'all';
+  }
+  return 'none';
+}
+
 /** The window the native playlist should hold for this queue; null for an empty queue. */
 export function desiredWindow(state: QueueState, options: WindowOptions = {}): PlayerWindow | null {
   const { ahead = WINDOW_AHEAD, behind = WINDOW_BEHIND, stopAfterCurrent = false } = options;
@@ -28,6 +49,10 @@ export function desiredWindow(state: QueueState, options: WindowOptions = {}): P
   const n = entries.length;
   const current = entries[index];
   if (!current) return null;
+  if (loopsWholeQueue(state, options)) {
+    const loaded = stopAfterCurrent ? entries.slice(0, index + 1) : entries;
+    return { keys: loaded.map((e) => e.key), current: index };
+  }
   const wraps = state.repeat !== 'off';
 
   const before: number[] = [];

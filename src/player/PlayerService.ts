@@ -36,7 +36,7 @@ export interface PlayerListener {
   onEntryChanged(key: number | null): void;
 }
 
-export type LoopMode = 'none' | 'single';
+export type LoopMode = 'none' | 'single' | 'all';
 
 /** Everything the player store needs from the audio engine; faked in tests. */
 export interface PlayerBackend {
@@ -173,6 +173,7 @@ export class PlayerService implements PlayerBackend {
   }
 
   setLoop(mode: LoopMode): void {
+    if (mode === this.#loop) return;
     this.#loop = mode;
     if (this.#playlist) this.#playlist.loop = mode;
   }

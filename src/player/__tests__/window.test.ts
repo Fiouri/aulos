@@ -10,7 +10,13 @@ import {
   skipTo,
   type QueueState,
 } from '../queue';
-import { applyOps, desiredWindow, planWindowSync, type PlayerWindow } from '../window';
+import {
+  applyOps,
+  desiredWindow,
+  nativeLoopMode,
+  planWindowSync,
+  type PlayerWindow,
+} from '../window';
 
 const keysOf = (q: QueueState, positions: number[]) =>
   positions.map((p) => q.entries[p]?.key ?? -1);
@@ -37,6 +43,23 @@ describe('desiredWindow', () => {
     });
     const first = skipTo(setRepeat(q, 'all'), 0);
     expect(desiredWindow(first, { ahead: 1, behind: 2 })?.keys).toEqual(keysOf(q, [4, 5, 0, 1]));
+  });
+
+  it('loads a repeating queue that fits once, in order, and loops it natively', () => {
+    const short = setRepeat(playNow(EMPTY_QUEUE, [20, 21, 22], 1), 'all');
+    expect(desiredWindow(short, { ahead: 2, behind: 1 })).toEqual({
+      keys: keysOf(short, [0, 1, 2]),
+      current: 1,
+    });
+    expect(nativeLoopMode(short, { ahead: 2, behind: 1 })).toBe('all');
+    expect(desiredWindow(short, { ahead: 2, behind: 1, stopAfterCurrent: true })?.keys).toEqual(
+      keysOf(short, [0, 1]),
+    );
+    expect(nativeLoopMode(short, { ahead: 2, behind: 1, stopAfterCurrent: true })).toBe('none');
+    // Longer than the window: wrapped in the window, no native loop.
+    expect(nativeLoopMode(setRepeat(q, 'all'), { ahead: 2, behind: 1 })).toBe('none');
+    expect(nativeLoopMode(setRepeat(q, 'one'))).toBe('single');
+    expect(nativeLoopMode(q)).toBe('none');
   });
 
   it('loads nothing after the current entry for the end-of-track sleep timer', () => {

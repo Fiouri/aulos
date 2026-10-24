@@ -43,7 +43,7 @@ import {
   type RepeatMode,
 } from '@/player/queue';
 import { SLEEP_OFF, sleepDecision, type SleepTimer } from '@/player/sleep';
-import { desiredWindow } from '@/player/window';
+import { desiredWindow, nativeLoopMode } from '@/player/window';
 import { showToast } from '@/ui/toast';
 
 /** Size of the artwork handed to the media notification and lock screen. */
@@ -244,7 +244,8 @@ export const usePlayerStore = create<PlayerState>()((set, get) => {
     const run = async () => {
       for (;;) {
         const { queue, sleep } = get();
-        const desired = desiredWindow(queue, { stopAfterCurrent: sleep.mode === 'endOfTrack' });
+        const windowOptions = { stopAfterCurrent: sleep.mode === 'endOfTrack' };
+        const desired = desiredWindow(queue, windowOptions);
         if (!desired) {
           r.deps.backend.unload();
           set({ playing: false, buffering: false, positionSec: 0, durationSec: 0 });
@@ -264,6 +265,7 @@ export const usePlayerStore = create<PlayerState>()((set, get) => {
           continue;
         }
         const uris = new Map(desired.keys.map((k) => [k, r.resolved.get(k) ?? '']));
+        r.deps.backend.setLoop(nativeLoopMode(queue, windowOptions));
         if (options.reload) r.deps.backend.load(desired, uris, options.positionSec ?? 0);
         else r.deps.backend.sync(desired, uris);
         return;
@@ -447,7 +449,6 @@ export const usePlayerStore = create<PlayerState>()((set, get) => {
           positionSec: positionMs / 1000,
           durationSec: (track?.durationMs ?? 0) / 1000,
         });
-        r.deps.backend.setLoop(queue.repeat === 'one' ? 'single' : 'none');
         // Restored paused: the player is loaded at the saved position but does not start.
         if (queue.entries.length > 0) {
           await syncWindow({ reload: true, positionSec: positionMs / 1000 });
@@ -580,7 +581,6 @@ export const usePlayerStore = create<PlayerState>()((set, get) => {
 
     async cycleRepeat() {
       const repeat = NEXT_REPEAT[get().queue.repeat];
-      rt().deps.backend.setLoop(repeat === 'one' ? 'single' : 'none');
       await commit(setRepeat(get().queue, repeat));
     },
 
