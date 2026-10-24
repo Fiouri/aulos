@@ -1,6 +1,13 @@
-**Current:** M1 Offline player — closed; full gate green on the S23 and API 31
-**Next step:** Owner: listen to "Gapless Test" and try real Bluetooth/wired headset buttons and unplugging; then start M2
-**Last session:** 2026-10-24 — album merge for per-track album artist tags ("Street Tape 3" one album on the S23); typecheck, lint, 169 tests, R8 release build, 8/8 Maestro flows on S23 and API 31, 60 min soak with the screen off the whole time passed
+**Current:** M2 Sources and downloads — closed; gate green on the S23 and the API 31 emulator
+**Next step:** Owner: try Wi-Fi only on real mobile data and a longer stream on a weak connection; confirm the GitHub repository URL for the User-Agent; then M3 (Nuclear pairing)
+**Last session:** 2026-10-25 — M2: Internet Archive search/stream/download, DownloadManager with resume, Wi-Fi-only gate and storage limit; typecheck, lint, 232 tests, R8 release build, Maestro 10/10 S23 and 9/9 API 31; fixed a media3 crash with short repeat-all queues
+
+## M2 Sources and downloads (closed 2026-10-25)
+
+- **Done:** HTTP client with timeout, retries and zod validation; response cache; provider layer (local + Internet Archive); IA search, albums, MP3 streaming and MP3/FLAC/Ogg downloads with MD5 check; DownloadManager (persisted, 2 at a time, resume after restart or reconnect, Wi-Fi only, storage limit, delete one/all); offline skip of streamed tracks; Search source switcher, remote album screen, track info with licence, Downloads and Settings → Sources. INTERNET is the only new permission; cleartext stays off.
+- **Verified:** typecheck, lint, 232 unit tests (provider tests on recorded archive.org fixtures), `gradlew lint assembleRelease` with R8, Maestro 10/10 on the S23 and 9/9 on API 31 (incl. `m2-archive-stream`, `m2-download-offline` in airplane mode). S23: resume after force-stop, MD5, storage-limit refusal. Wi-Fi only checked on the emulator (S23 has mobile data off). Details in `SESSIONS.md`.
+- **Open risks:** downloads pause in the background unless the process keeps network access (no download foreground service); VPN may count as metered for Wi-Fi only; no artwork for remote items; User-Agent repository URL assumed; Expo CLI audit advisories unchanged.
+- **Device testing (owner):** Wi-Fi only on real mobile data; streaming on a weak connection; licence link from Track info; M1 hardware items (gapless, Bluetooth/wired buttons, unplugging).
 
 ## M1 Offline player (closed 2026-10-24)
 
