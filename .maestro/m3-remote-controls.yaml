@@ -60,10 +60,8 @@ env:
     }
 - assertTrue: ${output.seekOk}
 
-# Volume: remember it, set it near 80 %, then put it back.
-- copyTextFrom:
-    id: 'pc-volume-value'
-- evalScript: ${output.volumeBefore = parseInt(maestro.copiedText, 10)}
+# Volume: set it near 80 %, then back to the middle (mock-jam starts at 50 %; on a real PC
+# note the volume before the run and restore it afterwards).
 - tapOn:
     id: 'pc-volume'
     point: '80%,50%'
@@ -72,7 +70,10 @@ env:
 - assertTrue: ${parseInt(maestro.copiedText, 10) >= 65}
 - tapOn:
     id: 'pc-volume'
-    point: '${Math.max(output.volumeBefore, 3)}%,50%'
+    point: '50%,50%'
+- copyTextFrom:
+    id: 'pc-volume-value'
+- assertTrue: ${Math.abs(parseInt(maestro.copiedText, 10) - 50) <= 10}
 
 - tapOn:
     id: 'pc-play-pause'

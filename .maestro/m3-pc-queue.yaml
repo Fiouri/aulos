@@ -1,10 +1,15 @@
-# PC queue against mock-jam (emulator): go to an item, remove one.
+# PC side against mock-jam (emulator): go to and remove queue items, PC search added to the
+# PC queue, save the PC queue as a playlist, Send to PC from the phone's track menu, clear the
+# PC queue with confirmation.
 appId: com.anywecon.aulos
 tags:
   - mock-jam
 env:
   JAM_HOST: 10.0.2.2:4125
   MOCK_JAM_ADMIN: http://127.0.0.1:4125
+onFlowComplete:
+  # Leave the mock with its starting queue for the flows that run after this one.
+  - runScript: common/reset-mock-jam.js
 ---
 - runScript: common/reset-mock-jam.js
 - runFlow: common/fresh-start.yaml
@@ -32,3 +37,71 @@ env:
     notVisible: 'Rainy Sunday'
     timeout: 5000
 - assertVisible: 'Island Road'
+
+# PC search: add a result to the PC queue.
+- scrollUntilVisible:
+    element:
+      id: 'pc-search'
+    direction: UP
+- tapOn:
+    id: 'pc-search'
+- tapOn:
+    id: 'pc-search-input'
+- inputText: 'tsitsanis'
+- extendedWaitUntil:
+    visible:
+      id: 'pc-result-0'
+    timeout: 10000
+- tapOn:
+    id: 'pc-result-add-0'
+- hideKeyboard
+- back
+- scrollUntilVisible:
+    element: 'Rainy Sunday'
+
+# Save the PC queue as a Nuclear playlist.
+- scrollUntilVisible:
+    element:
+      id: 'pc-save-queue'
+    direction: UP
+- tapOn:
+    id: 'pc-save-queue'
+- tapOn:
+    id: 'prompt-input'
+- inputText: 'From Aulos'
+- tapOn:
+    id: 'prompt-confirm'
+- assertNotVisible:
+    id: 'pc-error'
+
+# Send to PC from the phone's library: the exact match lands in the PC queue.
+- tapOn: 'Search'
+- tapOn:
+    id: 'search-input'
+- inputText: 'cafe del mar'
+- extendedWaitUntil:
+    visible:
+      id: 'search-song-0'
+    timeout: 10000
+- hideKeyboard
+- tapOn:
+    id: 'search-song-0-more'
+- tapOn:
+    id: 'menu-send-to-pc'
+- tapOn: 'PC'
+- scrollUntilVisible:
+    element: 'Café del Mar'
+
+# Clear the PC queue (with confirmation).
+- scrollUntilVisible:
+    element:
+      id: 'pc-queue-clear'
+    direction: UP
+- tapOn:
+    id: 'pc-queue-clear'
+- assertVisible: 'Clear the PC queue?'
+- tapOn: 'CLEAR PC QUEUE'
+- extendedWaitUntil:
+    visible:
+      id: 'pc-queue-empty'
+    timeout: 5000

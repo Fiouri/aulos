@@ -1,8 +1,6 @@
 # Import a Nuclear playlist export (pushed to Download/ by scripts/test-media.ps1): 4 items
 # match the standard test media, 2 stay as unavailable rows; the matched ones play.
 appId: com.anywecon.aulos
-tags:
-  - mock-jam
 ---
 - runFlow: common/fresh-start.yaml
 - runFlow:
@@ -28,6 +26,14 @@ tags:
 - assertVisible:
     id: 'detail-title'
     text: 'Nuclear Mix'
+# The unmatched items stay in the playlist as greyed "Not on this phone" rows.
+- scrollUntilVisible:
+    element: 'Unknown Song'
+- assertVisible: 'Nobody · Not on this phone'
+- scrollUntilVisible:
+    element:
+      id: 'playlist-play'
+    direction: UP
 - tapOn:
     id: 'playlist-play'
 - extendedWaitUntil:
