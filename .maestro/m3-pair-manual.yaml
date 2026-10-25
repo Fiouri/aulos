@@ -1,0 +1,22 @@
+# Manual pairing with Nuclear Jam: address entry, health check, Connected badge, saved PC.
+# Emulator: mock-jam at 10.0.2.2:4125 (default). S23: -e JAM_HOST=<PC LAN IP>:<port>.
+appId: com.anywecon.aulos
+env:
+  JAM_HOST: 10.0.2.2:4125
+---
+- runFlow: common/fresh-start.yaml
+- runFlow: common/pc-pair.yaml
+- assertVisible:
+    id: 'pc-play-pause'
+# Disconnecting shows the pairing screen with the PC saved.
+- tapOn:
+    id: 'pc-disconnect'
+- assertVisible:
+    id: 'pc-pairing-0'
+- tapOn:
+    id: 'pc-pairing-0'
+- extendedWaitUntil:
+    visible:
+      id: 'pc-status'
+      text: 'Connected'
+    timeout: 15000

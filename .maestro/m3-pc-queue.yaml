@@ -1,0 +1,34 @@
+# PC queue against mock-jam (emulator): go to an item, remove one.
+appId: com.anywecon.aulos
+tags:
+  - mock-jam
+env:
+  JAM_HOST: 10.0.2.2:4125
+  MOCK_JAM_ADMIN: http://127.0.0.1:4125
+---
+- runScript: common/reset-mock-jam.js
+- runFlow: common/fresh-start.yaml
+- runFlow: common/pc-pair.yaml
+- scrollUntilVisible:
+    element:
+      id: 'pc-queue-2'
+- tapOn:
+    id: 'pc-queue-2'
+- scrollUntilVisible:
+    element:
+      id: 'pc-title'
+    direction: UP
+- extendedWaitUntil:
+    visible:
+      id: 'pc-title'
+      text: 'Gapless part 2'
+    timeout: 5000
+- scrollUntilVisible:
+    element:
+      id: 'pc-queue-remove-0'
+- tapOn:
+    id: 'pc-queue-remove-0'
+- extendedWaitUntil:
+    notVisible: 'Rainy Sunday'
+    timeout: 5000
+- assertVisible: 'Island Road'

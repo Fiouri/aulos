@@ -1,0 +1,39 @@
+# Import a Nuclear playlist export (pushed to Download/ by scripts/test-media.ps1): 4 items
+# match the standard test media, 2 stay as unavailable rows; the matched ones play.
+appId: com.anywecon.aulos
+tags:
+  - mock-jam
+---
+- runFlow: common/fresh-start.yaml
+- runFlow:
+    file: common/open-section.yaml
+    env:
+      SECTION: playlists
+- tapOn:
+    id: 'playlist-import'
+- runFlow:
+    when:
+      notVisible: 'nuclear-mix.*'
+    commands:
+      - tapOn: 'Show roots'
+      - tapOn: 'Downloads'
+- scrollUntilVisible:
+    element: 'nuclear-mix.*'
+- tapOn: 'nuclear-mix.*'
+- extendedWaitUntil:
+    visible:
+      id: 'playlist-import-result'
+      text: 'Import: 4 matched, 2 not on this phone'
+    timeout: 10000
+- assertVisible:
+    id: 'detail-title'
+    text: 'Nuclear Mix'
+- tapOn:
+    id: 'playlist-play'
+- extendedWaitUntil:
+    visible:
+      id: 'mini-title'
+      text: 'Τα Παιδιά του Πειραιά'
+    timeout: 10000
+- tapOn:
+    id: 'mini-play-pause'

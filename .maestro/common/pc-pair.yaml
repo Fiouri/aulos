@@ -1,0 +1,23 @@
+# Pairs with the Jam server at ${JAM_HOST} by manual entry and waits for the live connection.
+# The security notice shows once per fresh install.
+appId: com.anywecon.aulos
+---
+- tapOn: 'PC'
+- runFlow:
+    when:
+      visible:
+        id: 'pc-notice-ok'
+    commands:
+      - tapOn:
+          id: 'pc-notice-ok'
+- tapOn:
+    id: 'pc-host-input'
+- inputText: ${JAM_HOST}
+- hideKeyboard
+- tapOn:
+    id: 'pc-host-connect'
+- extendedWaitUntil:
+    visible:
+      id: 'pc-status'
+      text: 'Connected'
+    timeout: 15000

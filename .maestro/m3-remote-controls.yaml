@@ -1,0 +1,78 @@
+# Remote controls reflected in the PC's state (from the event stream): play/pause, next,
+# seek and volume. Works against mock-jam and the real Nuclear (needs a queue on the PC).
+appId: com.anywecon.aulos
+env:
+  JAM_HOST: 10.0.2.2:4125
+---
+- runFlow: common/fresh-start.yaml
+- runFlow: common/pc-pair.yaml
+
+# Start from paused, then play and pause again.
+- runFlow:
+    when:
+      visible:
+        id: 'pc-play-pause'
+        text: 'Pause'
+    commands:
+      - tapOn:
+          id: 'pc-play-pause'
+- extendedWaitUntil:
+    visible:
+      id: 'pc-play-pause'
+      text: 'Play'
+    timeout: 5000
+- tapOn:
+    id: 'pc-play-pause'
+- extendedWaitUntil:
+    visible:
+      id: 'pc-play-pause'
+      text: 'Pause'
+    timeout: 5000
+
+# Next: the title changes (polled from the screen; titles may contain regex characters).
+- copyTextFrom:
+    id: 'pc-title'
+- evalScript: ${output.before = maestro.copiedText}
+- tapOn:
+    id: 'pc-next'
+- repeat:
+    times: 15
+    while:
+      true: ${maestro.copiedText === output.before}
+    commands:
+      - copyTextFrom:
+          id: 'pc-title'
+- assertTrue: ${maestro.copiedText !== output.before}
+
+# Seek to 60 %: the position passes a third of the track.
+- copyTextFrom:
+    id: 'pc-duration'
+- evalScript: ${output.duration = maestro.copiedText}
+- tapOn:
+    id: 'pc-seek'
+    point: '60%,50%'
+- copyTextFrom:
+    id: 'pc-position'
+- evalScript: |
+    ${
+      const seconds = (t) => t.split(':').reduce((total, part) => total * 60 + Number(part), 0);
+      output.seekOk = seconds(maestro.copiedText) * 3 >= seconds(output.duration);
+    }
+- assertTrue: ${output.seekOk}
+
+# Volume: remember it, set it near 80 %, then put it back.
+- copyTextFrom:
+    id: 'pc-volume-value'
+- evalScript: ${output.volumeBefore = parseInt(maestro.copiedText, 10)}
+- tapOn:
+    id: 'pc-volume'
+    point: '80%,50%'
+- copyTextFrom:
+    id: 'pc-volume-value'
+- assertTrue: ${parseInt(maestro.copiedText, 10) >= 65}
+- tapOn:
+    id: 'pc-volume'
+    point: '${Math.max(output.volumeBefore, 3)}%,50%'
+
+- tapOn:
+    id: 'pc-play-pause'

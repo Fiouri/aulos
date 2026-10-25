@@ -9,9 +9,12 @@
             album artist tag, a 4-track album whose featured artists are in per-track album
             artist tags, and two 2-track "Greatest Hits" albums in one folder (22 tracks).
   bulk      standard plus 2,000 short tracks (200 albums of 10) for the performance run.
-  clean     Removes /sdcard/Music/AulosTest from the device and rescans.
+  clean     Removes /sdcard/Music/AulosTest (and the Nuclear playlist fixture) from the device
+            and rescans.
 
   Files are generated under $env:TEMP\Aulos\test-media and pushed to /sdcard/Music/AulosTest.
+  test/fixtures/nuclear/nuclear-mix.nuclear-playlist.json goes to /sdcard/Download/ for the
+  Nuclear import flow.
   Needs ffmpeg and adb on PATH; installs nothing.
 
 .EXAMPLE
@@ -286,8 +289,13 @@ or download a static build from https://www.gyan.dev/ffmpeg/builds/ and add its 
 '@
 }
 
+# Nuclear playlist export for m3-import-nuclear: its items match the standard set.
+$NuclearFixture = Join-Path (Split-Path -Parent $PSScriptRoot) 'test\fixtures\nuclear\nuclear-mix.nuclear-playlist.json'
+$NuclearFixtureOnDevice = '/sdcard/Download/nuclear-mix.nuclear-playlist.json'
+
 if ($Mode -eq 'clean') {
   Invoke-Adb shell rm -rf $DeviceDir | Out-Null
+  Invoke-Adb shell rm -f $NuclearFixtureOnDevice | Out-Null
   Invoke-MediaRescan @()
   Write-Host "Removed $DeviceDir; AulosTest tracks left in MediaStore: $(Get-TestTrackCount)"
   Write-Host "Music tracks on the device: $(Get-MusicCount)"
@@ -314,6 +322,7 @@ Invoke-Adb push $root '/sdcard/Music/' | Out-Null
 $deviceFiles = $files | ForEach-Object {
   '/sdcard/Music/AulosTest/' + $_.FullName.Substring($root.Length + 1).Replace('\', '/')
 }
-Invoke-MediaRescan $deviceFiles
+Invoke-Adb push $NuclearFixture $NuclearFixtureOnDevice | Out-Null
+Invoke-MediaRescan ($deviceFiles + $NuclearFixtureOnDevice)
 Write-Host "AulosTest tracks in MediaStore: $(Get-TestTrackCount) (generated $($files.Count))"
 Write-Host "Music tracks on the device: $(Get-MusicCount)"
