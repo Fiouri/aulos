@@ -10,7 +10,9 @@ Binding copy for implementation. Discussion copy: Claude Doc "Android Music App 
 | App name / package | Codename `Aulos`, `com.anywecon.aulos` (full flavour: `com.anywecon.aulos.full`) |
 | Licence | GPL-3.0-or-later |
 | YouTube (`full` flavour) | Not in v1; planned for v1.1 after the `clean` build is stable |
-| Upstream Nuclear PR (read endpoints + pairing token) | Opened during M3 |
+| Upstream Nuclear PR | Dropped (2026-10-25): Nuclear does not accept code contributions (its CONTRIBUTING.md). Replaced by Nuclear JSON import in M3 and a spike on an "Aulos Link" Nuclear plugin |
+| Pairing | LAN discovery + manual host entry; no QR scanning in v1 (no camera permission, no ML Kit) |
+| Cleartext HTTP | Allowed only to private-network hosts (LAN, Tailscale 100.64/10, link-local), enforced in app code; everything else HTTPS only (M3) |
 | Languages | English only in v1; all UI strings go through i18n so a translation can be added later without code changes |
 | Jamendo | Deferred (2026-10-24): not in v1; may be added later as another provider |
 
@@ -57,7 +59,7 @@ UI (expo-router screens: library, search, now playing, playlists, downloads, PC 
         ├─> Library scan  Kotlin Expo module over Android MediaStore ──> SQLite
         ├─> Downloads     expo-file-system, resume, storage limit    ──> SQLite
         ├─> Providers     local, archive (youtube: full only, v1.1) ──HTTPS──> Internet Archive
-        └─> Nuclear link  Jam API client, pairing by QR, SSE           ──HTTP/SSE──> Nuclear on the PC (port 4120–4129)
+        └─> Nuclear link  Jam API client, LAN discovery, SSE           ──HTTP/SSE──> Nuclear on the PC (port 4120–4129)
 SQLite (expo-sqlite): tracks, playlists, favorites, downloads, history, pairings, kv
 ```
 
@@ -115,7 +117,7 @@ Nuclear Jam's HTTP API binds to `0.0.0.0` on ports 4120–4129 (reachable over L
 
 | Feature | Endpoint(s) | Works today |
 | --- | --- | --- |
-| Pair by scanning Jam's QR code | Remote URL → `/api/health` | Yes |
+| Pair by LAN discovery or manual host | probe `/api/health` on ports 4120–4129 | Yes |
 | Live now-playing and queue | `GET /api/events` (SSE: `queue`, `playback`, `settings`) | Yes |
 | Play, pause, next, previous, seek, volume, shuffle, repeat | `POST /api/playback/*` | Yes |
 | Search on the PC and send tracks to its queue | `POST /api/search`, `POST /api/queue/add` | Yes |
@@ -125,7 +127,7 @@ Nuclear Jam's HTTP API binds to `0.0.0.0` on ports 4120–4129 (reachable over L
 
 v1 import path: Nuclear exports playlists as JSON; the phone imports those files via the share sheet or file picker. Track refs are re-resolved through the matching provider; unresolved items stay marked "not available offline". Imports are one-way and additive; a re-import updates the playlist with the same Nuclear id and never deletes phone-only items.
 
-Upstream PR (M3): `GET /api/playlists`, `GET /api/playlists/{id}`, `GET /api/favorites`, optional pairing token on all routes.
+No upstream PR: Nuclear does not accept code contributions. Reading the PC's playlists and favorites directly is evaluated in M3 as an "Aulos Link" Nuclear plugin that would use the existing Jam settings endpoints as a mailbox (spike only).
 
 Reference: nukeop/nuclear `packages/docs/integrations/http-api.md`, `packages/player/src-tauri/src/http_api/mod.rs` at commit `5221018` (2026-10-22).
 
@@ -165,7 +167,8 @@ Every release ships the APK and its SHA-256 checksum, built locally with `gradle
 | YouTube changes break the extractor | `full` stops streaming until updated | Isolated provider; `clean` unaffected |
 | YouTube terms / takedown requests | Repo or release takedown | YouTube provider in its own repo |
 | Play copyright policy bans unauthorised download apps | `full` can never be listed | Only `clean` is a store candidate |
-| Jam API has no authentication | Anyone on the same network controls the PC player | Warn in pairing UI; upstream token PR; Windows firewall: allow Nuclear on Private networks only |
+| Jam API has no authentication | Anyone on the same network controls the PC player | Warn in pairing UI; Windows firewall: allow Nuclear on Private networks only; turn Jam off on public Wi-Fi |
+| Cleartext HTTP to the PC | LAN traffic to Jam is unencrypted | App-level guard allows HTTP only to private-network hosts; Tailscale encrypts remote use |
 | OEM battery killers stop background audio | Playback stops with screen off | Media foreground service via lock-screen controls; one-time battery-optimisation prompt |
 | Play personal accounts need 12 testers for 14 days | Delay before a `clean` listing | Not needed for v1; recheck rule before any store plan |
 
@@ -178,7 +181,7 @@ None starts until the previous gate passes on a real phone.
 | M0 Foundation | Expo SDK 58 project, TS strict, lint, Jest; SQLite schema and migrations; Kotlin MediaStore module; i18n scaffolding | Release APK builds locally with Gradle; typecheck, lint and tests pass with 0 warnings; app starts on a real phone and shows the scanned track count |
 | M1 Offline player | Library browse, queue, gapless, background; lock screen, Bluetooth, sleep timer; playlists, favorites, history; FTS search that ignores accents (Greek tonos included); R8 minify and resource shrinking on release | 2,000-track scan under 30 s; 1 h screen-off playback with no stop; cold start under 2 s; all Maestro flows pass on the S23 and on an API 31 emulator |
 | M2 Sources and downloads | SourceProvider interface; Internet Archive; downloads with resume and storage limit | Search, stream and download a track, then play it in airplane mode; provider tests use recorded HTTP fixtures |
-| M3 Nuclear pairing | QR pairing, live remote over SSE; send search results to the PC queue; import Nuclear JSON playlists | Control the PC over LAN and Tailscale; an imported playlist plays on the phone; upstream PR opened |
+| M3 Nuclear pairing | LAN discovery and manual pairing, live remote over SSE; PC search and send to the PC queue; import Nuclear JSON playlists; Aulos Link plugin spike | Control the PC over LAN and Tailscale; an imported Nuclear playlist plays on the phone; spike report with go/no-go |
 | M4 Release | English UI; ABI splits; `clean` flavour; signed APK and SHA-256 on GitHub Releases | 7 days of daily use with zero crashes; fresh install test on a second phone; F-Droid metadata ready |
 
 Verification gate (every milestone and in CI):
