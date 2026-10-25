@@ -3,12 +3,14 @@ import { mkdirSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 
 import {
+  AndroidConfig,
   type AndroidManifest,
   type ConfigPlugin,
   withAndroidManifest,
   withAndroidStyles,
   withAppBuildGradle,
   withDangerousMod,
+  withFinalizedMod,
 } from 'expo/config-plugins';
 
 type ManifestUsesPermission = NonNullable<AndroidManifest['manifest']['uses-permission']>[number];
@@ -72,6 +74,36 @@ const withNetworkSecurityConfig: ConfigPlugin = (config) =>
     },
   );
 
+const SHARING_GENERATED_TAG = 'expo-sharing-intent-filters';
+
+/**
+ * expo-sharing marks its intent filters with a bare `expo-sharing-intent-filters` attribute
+ * (lint MissingPrefix) and always adds a SEND_MULTIPLE filter, which has no MIME type here and
+ * so matches nothing. expo-sharing removes its old filters by that marker on every manifest
+ * pass, so the cleanup edits the written manifest once all mods have run.
+ */
+const withCleanShareIntentFilters: ConfigPlugin = (config) =>
+  withFinalizedMod(config, [
+    'android',
+    async (mod) => {
+      const path = await AndroidConfig.Paths.getAndroidManifestAsync(mod.modRequest.projectRoot);
+      const manifest = await AndroidConfig.Manifest.readAndroidManifestAsync(path);
+      const activity = AndroidConfig.Manifest.getMainActivityOrThrow(manifest);
+      activity['intent-filter'] = (activity['intent-filter'] ?? [])
+        .filter((filter) => {
+          const attributes: Record<string, string | undefined> = filter.$ ?? {};
+          return attributes[SHARING_GENERATED_TAG] !== 'true' || (filter.data?.length ?? 0) > 0;
+        })
+        .map((filter) => {
+          const attributes: Record<string, string | undefined> = { ...filter.$ };
+          delete attributes[SHARING_GENERATED_TAG];
+          return { ...filter, $: attributes };
+        });
+      await AndroidConfig.Manifest.writeAndroidManifestAsync(path, manifest);
+      return mod;
+    },
+  ]);
+
 const SPLASH_BEHAVIOR = 'android:windowSplashScreenBehavior';
 
 /**
@@ -125,93 +157,95 @@ android {
       });
 
 export default ({ config }: ConfigContext): ExpoConfig =>
-  withNetworkSecurityConfig(
-    withWindowsCmake(
-      withSplashBehaviorTargetApi(
-        withLegacyStoragePermission({
-          ...config,
-          name: 'Aulos',
-          slug: 'aulos',
-          version: '0.1.0',
-          orientation: 'portrait',
-          icon: './assets/images/icon.png',
-          scheme: 'aulos',
-          userInterfaceStyle: 'automatic',
-          platforms: ['android'],
-          android: {
-            package: 'com.anywecon.aulos',
-            versionCode: 1,
-            adaptiveIcon: {
-              backgroundColor: '#E6F4FE',
-              foregroundImage: './assets/images/android-icon-foreground.png',
-              backgroundImage: './assets/images/android-icon-background.png',
-              monochromeImage: './assets/images/android-icon-monochrome.png',
+  withCleanShareIntentFilters(
+    withNetworkSecurityConfig(
+      withWindowsCmake(
+        withSplashBehaviorTargetApi(
+          withLegacyStoragePermission({
+            ...config,
+            name: 'Aulos',
+            slug: 'aulos',
+            version: '0.1.0',
+            orientation: 'portrait',
+            icon: './assets/images/icon.png',
+            scheme: 'aulos',
+            userInterfaceStyle: 'automatic',
+            platforms: ['android'],
+            android: {
+              package: 'com.anywecon.aulos',
+              versionCode: 1,
+              adaptiveIcon: {
+                backgroundColor: '#E6F4FE',
+                foregroundImage: './assets/images/android-icon-foreground.png',
+                backgroundImage: './assets/images/android-icon-background.png',
+                monochromeImage: './assets/images/android-icon-monochrome.png',
+              },
+              predictiveBackGestureEnabled: false,
+              // POST_NOTIFICATIONS: expo-audio's media playback service posts the player
+              // notification on Android 13+. INTERNET: Internet Archive search, streaming and
+              // downloads over HTTPS (M2).
+              permissions: [
+                'android.permission.READ_MEDIA_AUDIO',
+                'android.permission.POST_NOTIFICATIONS',
+                'android.permission.INTERNET',
+              ],
+              // ACCESS_WIFI_STATE comes with expo-network but is not needed: the connection type
+              // is read from ConnectivityManager (ACCESS_NETWORK_STATE).
+              blockedPermissions: [
+                'android.permission.ACCESS_WIFI_STATE',
+                'android.permission.RECORD_AUDIO',
+                'android.permission.MODIFY_AUDIO_SETTINGS',
+                'android.permission.SYSTEM_ALERT_WINDOW',
+                'android.permission.WRITE_EXTERNAL_STORAGE',
+                'android.permission.VIBRATE',
+              ],
             },
-            predictiveBackGestureEnabled: false,
-            // POST_NOTIFICATIONS: expo-audio's media playback service posts the player
-            // notification on Android 13+. INTERNET: Internet Archive search, streaming and
-            // downloads over HTTPS (M2).
-            permissions: [
-              'android.permission.READ_MEDIA_AUDIO',
-              'android.permission.POST_NOTIFICATIONS',
-              'android.permission.INTERNET',
-            ],
-            // ACCESS_WIFI_STATE comes with expo-network but is not needed: the connection type
-            // is read from ConnectivityManager (ACCESS_NETWORK_STATE).
-            blockedPermissions: [
-              'android.permission.ACCESS_WIFI_STATE',
-              'android.permission.RECORD_AUDIO',
-              'android.permission.MODIFY_AUDIO_SETTINGS',
-              'android.permission.SYSTEM_ALERT_WINDOW',
-              'android.permission.WRITE_EXTERNAL_STORAGE',
-              'android.permission.VIBRATE',
-            ],
-          },
-          plugins: [
-            'expo-router',
-            [
-              'expo-splash-screen',
-              {
-                backgroundColor: '#208AEF',
-                image: './assets/images/splash-icon.png',
-                imageWidth: 76,
-              },
-            ],
-            [
-              'expo-build-properties',
-              {
-                android: {
-                  enableMinifyInReleaseBuilds: true,
-                  enableShrinkResourcesInReleaseBuilds: true,
-                  extraProguardRules: PROGUARD_RULES,
+            plugins: [
+              'expo-router',
+              [
+                'expo-splash-screen',
+                {
+                  backgroundColor: '#208AEF',
+                  image: './assets/images/splash-icon.png',
+                  imageWidth: 76,
                 },
-              },
+              ],
+              [
+                'expo-build-properties',
+                {
+                  android: {
+                    enableMinifyInReleaseBuilds: true,
+                    enableShrinkResourcesInReleaseBuilds: true,
+                    extraProguardRules: PROGUARD_RULES,
+                  },
+                },
+              ],
+              ['expo-sqlite', { enableFTS: true }],
+              // Receives playlist files from the share sheet (Nuclear exports, Aulos exports).
+              [
+                'expo-sharing',
+                { android: { enabled: true, singleShareMimeTypes: ['application/json'] } },
+              ],
+              [
+                'expo-audio',
+                {
+                  enableBackgroundPlayback: true,
+                  enableBackgroundRecording: false,
+                  microphonePermission: false,
+                  recordAudioAndroid: false,
+                },
+              ],
             ],
-            ['expo-sqlite', { enableFTS: true }],
-            // Receives playlist files from the share sheet (Nuclear exports, Aulos exports).
-            [
-              'expo-sharing',
-              { android: { enabled: true, singleShareMimeTypes: ['application/json'] } },
-            ],
-            [
-              'expo-audio',
-              {
-                enableBackgroundPlayback: true,
-                enableBackgroundRecording: false,
-                microphonePermission: false,
-                recordAudioAndroid: false,
-              },
-            ],
-          ],
-          experiments: {
-            typedRoutes: true,
-            reactCompiler: true,
-          },
-          extra: {
-            ...config.extra,
-            repositoryUrl: REPOSITORY_URL,
-          },
-        }),
+            experiments: {
+              typedRoutes: true,
+              reactCompiler: true,
+            },
+            extra: {
+              ...config.extra,
+              repositoryUrl: REPOSITORY_URL,
+            },
+          }),
+        ),
       ),
     ),
   );
