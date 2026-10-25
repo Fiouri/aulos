@@ -7,6 +7,7 @@ import {
   NotFoundError,
   RateLimitError,
 } from './errors';
+import { assertRequestAllowed } from './guard';
 
 export const DEFAULT_TIMEOUT_MS = 15_000;
 export const MAX_ATTEMPTS = 3;
@@ -80,7 +81,8 @@ class RetryableFailure {
  * JSON GET over fetch for provider APIs: a timeout per attempt, caller cancellation, up to three
  * attempts with exponential backoff and jitter on network errors, 429 (honouring Retry-After)
  * and 5xx, and zod validation of the body. Failures surface as the typed errors of errors.ts;
- * a caller abort rejects with an AbortError and is never retried.
+ * a caller abort rejects with an AbortError and is never retried. Cleartext to a public host is
+ * refused with a CleartextBlockedError before anything is sent.
  */
 export function createHttpJson(deps: HttpDeps): HttpJson {
   const attempt = async <T>(
@@ -143,6 +145,7 @@ export function createHttpJson(deps: HttpDeps): HttpJson {
   };
 
   return async (url, schema, options = {}) => {
+    assertRequestAllowed(url);
     const { timeoutMs = DEFAULT_TIMEOUT_MS, signal, maxAttempts = MAX_ATTEMPTS } = options;
     for (let n = 1; ; n += 1) {
       if (signal?.aborted) throw abortError();

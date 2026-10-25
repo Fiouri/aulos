@@ -35,47 +35,30 @@ const withLegacyStoragePermission: ConfigPlugin = (config) =>
   });
 
 /** Repository named in the User-Agent of every request (src/net/client.ts). */
-const REPOSITORY_URL = 'https://github.com/anywecon/aulos';
+const REPOSITORY_URL = 'https://github.com/Fiouri/aulos';
 
 const NETWORK_SECURITY_CONFIG = 'network_security_config';
 
-/** Release: HTTPS only, no cleartext anywhere (M2 talks to archive.org over HTTPS). */
-const RELEASE_NETWORK_SECURITY = `<?xml version="1.0" encoding="utf-8"?>
-<network-security-config>
-    <base-config cleartextTrafficPermitted="false" />
-</network-security-config>
-`;
-
-/** Debug builds also reach the Metro bundler over HTTP on this machine (adb reverse, emulator). */
-const DEBUG_NETWORK_SECURITY = `<?xml version="1.0" encoding="utf-8"?>
-<network-security-config>
-    <base-config cleartextTrafficPermitted="false" />
-    <domain-config cleartextTrafficPermitted="true">
-        <domain includeSubdomains="false">localhost</domain>
-        <domain includeSubdomains="false">127.0.0.1</domain>
-        <domain includeSubdomains="false">10.0.2.2</domain>
-    </domain-config>
-</network-security-config>
-`;
-
 /**
- * Network security config with cleartext traffic disabled. The debug source set overrides the
- * resource so the Metro bundler keeps working; release builds only ever get the strict file.
+ * Cleartext is permitted at the platform level because Nuclear Jam on the PC only speaks HTTP
+ * and Android's network security config cannot whitelist IP ranges (LAN, Tailscale 100.64/10).
+ * The control is in app code: every request goes through assertRequestAllowed (src/net/guard.ts),
+ * which allows HTTP only to private-network hosts and HTTPS everywhere else.
  */
+const NETWORK_SECURITY = `<?xml version="1.0" encoding="utf-8"?>
+<network-security-config>
+    <base-config cleartextTrafficPermitted="true" />
+</network-security-config>
+`;
+
 const withNetworkSecurityConfig: ConfigPlugin = (config) =>
   withAndroidManifest(
     withDangerousMod(config, [
       'android',
       (mod) => {
-        const src = join(mod.modRequest.platformProjectRoot, 'app', 'src');
-        for (const [sourceSet, xml] of [
-          ['main', RELEASE_NETWORK_SECURITY],
-          ['debug', DEBUG_NETWORK_SECURITY],
-        ] as const) {
-          const dir = join(src, sourceSet, 'res', 'xml');
-          mkdirSync(dir, { recursive: true });
-          writeFileSync(join(dir, `${NETWORK_SECURITY_CONFIG}.xml`), xml);
-        }
+        const dir = join(mod.modRequest.platformProjectRoot, 'app', 'src', 'main', 'res', 'xml');
+        mkdirSync(dir, { recursive: true });
+        writeFileSync(join(dir, `${NETWORK_SECURITY_CONFIG}.xml`), NETWORK_SECURITY);
         return mod;
       },
     ]),
@@ -83,7 +66,7 @@ const withNetworkSecurityConfig: ConfigPlugin = (config) =>
       const application = mod.modResults.manifest.application?.[0];
       if (application) {
         application.$['android:networkSecurityConfig'] = `@xml/${NETWORK_SECURITY_CONFIG}`;
-        application.$['android:usesCleartextTraffic'] = 'false';
+        application.$['android:usesCleartextTraffic'] = 'true';
       }
       return mod;
     },

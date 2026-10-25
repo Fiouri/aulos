@@ -7,6 +7,7 @@ import {
   NetworkError,
   NotFoundError,
 } from '@/net/errors';
+import { assertRequestAllowed } from '@/net/guard';
 
 export interface TransferRequest {
   url: string;
@@ -68,6 +69,7 @@ function toTypedError(error: unknown, signal: AbortSignal | undefined): Error {
  */
 export const expoTransfer: Transfer = async (request) => {
   const { url, fileUri, resume, headers, signal, onProgress } = request;
+  assertRequestAllowed(url);
   const options = {
     headers,
     signal,

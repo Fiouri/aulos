@@ -41,6 +41,7 @@ describe('player store', () => {
     checkFiles: async (uris) => uris.map((u) => !missing.has(u)),
     resolveStream: async (track) => {
       if (track.providerRef.includes('gone')) throw new Error('not found');
+      if (track.providerRef.includes('plain')) return `http://example.org/${track.providerRef}`;
       return `https://archive.org/download/${track.providerRef}`;
     },
     isOnline: async () => online,
@@ -200,6 +201,16 @@ describe('player store', () => {
     if (!a || !gone) throw new Error('fixture');
     await player().playTracks([gone, a], 0);
     expect(toasts).toEqual(['Skipped “Gone”: it could not be played.']);
+    expect(title()).toBe('A');
+  });
+
+  it('refuses a provider stream over plain HTTP', async () => {
+    const [plain] = await storeTracks(db, [remote('item/plain.mp3', 'Plain')]);
+    const [a] = tracks;
+    if (!a || !plain) throw new Error('fixture');
+    await player().playTracks([plain, a], 0);
+    expect(toasts).toEqual(['Skipped “Plain”: it could not be played.']);
+    expect([...fake.uris.values()].some((u) => u.startsWith('http:'))).toBe(false);
     expect(title()).toBe('A');
   });
 

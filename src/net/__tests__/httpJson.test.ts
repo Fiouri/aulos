@@ -10,6 +10,7 @@ import {
   NotFoundError,
   RateLimitError,
 } from '../errors';
+import { CleartextBlockedError } from '../guard';
 import { backoffMs, createHttpJson, MAX_RETRY_AFTER_MS, parseRetryAfter } from '../httpJson';
 
 const schema = z.object({ ok: z.literal(true) });
@@ -45,6 +46,19 @@ const hang = (init?: RequestInit) =>
   });
 
 describe('httpJson', () => {
+  it('refuses plain HTTP to a public host before sending anything', async () => {
+    const { httpJson, fetch } = setup([async () => json({ ok: true })]);
+    await expect(httpJson('http://archive.org/x', schema)).rejects.toBeInstanceOf(
+      CleartextBlockedError,
+    );
+    expect(fetch).not.toHaveBeenCalled();
+  });
+
+  it('allows plain HTTP to a private host', async () => {
+    const { httpJson } = setup([async () => json({ ok: true })]);
+    await expect(httpJson('http://192.168.1.20:4120/x', schema)).resolves.toEqual({ ok: true });
+  });
+
   it('returns the validated body and sends the User-Agent', async () => {
     const { httpJson, calls } = setup([async () => json({ ok: true })]);
     await expect(httpJson('https://archive.org/x', schema)).resolves.toEqual({ ok: true });

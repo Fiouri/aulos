@@ -5,6 +5,7 @@ import type {
   PlayerListener,
   PlayerStatus,
 } from '@/player/PlayerService';
+import { isPlayableSource } from '@/player/sources';
 import { applyOps, planWindowSync, type PlayerWindow } from '@/player/window';
 
 /**
@@ -18,6 +19,10 @@ export class FakePlayer implements PlayerBackend {
   position = 0;
   volume = 1;
   loop: LoopMode = 'none';
+
+  acceptsSource(uri: string): boolean {
+    return isPlayableSource(uri);
+  }
   loads: { window: PlayerWindow; positionSec: number }[] = [];
   nowPlaying: NowPlayingInfo | null = null;
   listener: PlayerListener | null = null;

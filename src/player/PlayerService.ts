@@ -6,6 +6,9 @@ import {
   type AudioPlaylistStatus,
 } from 'expo-audio';
 
+import { CleartextBlockedError } from '@/net/guard';
+
+import { isPlayableSource } from './sources';
 import { applyOps, planWindowSync, type NativeOp, type PlayerWindow } from './window';
 
 /** Status of the native player, mapped onto queue entry keys. */
@@ -42,6 +45,8 @@ export type LoopMode = 'none' | 'single' | 'all';
 export interface PlayerBackend {
   configure(): Promise<void>;
   setListener(listener: PlayerListener | null): void;
+  /** Whether the player will open this URI (see isPlayableSource). */
+  acceptsSource(uri: string): boolean;
   /** Rebuilds the native playlist from scratch (startup restore, error recovery). */
   load(window: PlayerWindow, uris: ReadonlyMap<number, string>, positionSec: number): void;
   /** Brings the loaded native playlist in line with `window` with minimal changes. */
@@ -97,9 +102,13 @@ export class PlayerService implements PlayerBackend {
     this.#listener = listener;
   }
 
+  acceptsSource(uri: string): boolean {
+    return isPlayableSource(uri);
+  }
+
   load(window: PlayerWindow, uris: ReadonlyMap<number, string>, positionSec: number): void {
     this.#release();
-    const sources = window.keys.map((key) => ({ uri: uris.get(key) ?? '' }));
+    const sources = window.keys.map((key) => this.#source(uris, key));
     const playlist = createAudioPlaylist({
       sources,
       updateInterval: STATUS_INTERVAL_MS,
@@ -188,6 +197,12 @@ export class PlayerService implements PlayerBackend {
     this.#lastKey = null;
   }
 
+  #source(uris: ReadonlyMap<number, string>, key: number): { uri: string } {
+    const uri = uris.get(key) ?? '';
+    if (!isPlayableSource(uri)) throw new CleartextBlockedError();
+    return { uri };
+  }
+
   #nativeIndex(): number {
     return this.#playlist?.currentIndex ?? 0;
   }
@@ -195,10 +210,10 @@ export class PlayerService implements PlayerBackend {
   #apply(playlist: AudioPlaylist, op: NativeOp, uris: ReadonlyMap<number, string>) {
     switch (op.type) {
       case 'add':
-        playlist.add({ uri: uris.get(op.key) ?? '' });
+        playlist.add(this.#source(uris, op.key));
         break;
       case 'insert':
-        playlist.insert({ uri: uris.get(op.key) ?? '' }, op.index);
+        playlist.insert(this.#source(uris, op.key), op.index);
         break;
       case 'remove':
         playlist.remove(op.index);

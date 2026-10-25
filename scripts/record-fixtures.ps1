@@ -25,7 +25,7 @@ param(
 $ErrorActionPreference = 'Stop'
 Set-StrictMode -Version Latest
 
-$UserAgent = 'Aulos/0.1.0 (+https://github.com/anywecon/aulos; fixture recorder)'
+$UserAgent = 'Aulos/0.1.0 (+https://github.com/Fiouri/aulos; fixture recorder)'
 $SearchRows = 20
 $SearchFields = @('identifier', 'title', 'creator', 'year', 'licenseurl')
 

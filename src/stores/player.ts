@@ -227,7 +227,9 @@ export const usePlayerStore = create<PlayerState>()((set, get) => {
         continue;
       }
       try {
-        r.resolved.set(key, await r.deps.resolveStream(track));
+        const url = await r.deps.resolveStream(track);
+        if (r.deps.backend.acceptsSource(url)) r.resolved.set(key, url);
+        else skipped.push({ key, reason: 'unplayable' });
       } catch {
         skipped.push({ key, reason: 'unplayable' });
       }
