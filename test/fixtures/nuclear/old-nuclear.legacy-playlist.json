@@ -1,0 +1,18 @@
+{
+  "name": "Old Nuclear",
+  "tracks": [
+    {
+      "uuid": "5b0f7d2e-legacy-1",
+      "artist": "Μάνος Χατζιδάκις",
+      "name": "Χάρτινο το Φεγγαράκι",
+      "album": "Ο Μεγάλος Ερωτικός",
+      "thumbnail": "https://example.org/t.jpg",
+      "duration": "0:03"
+    },
+    {
+      "artist": "Lost Artist",
+      "name": "Gone Track",
+      "duration": 200
+    }
+  ]
+}

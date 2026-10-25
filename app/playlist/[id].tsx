@@ -33,6 +33,7 @@ import { Spacing, useColors } from '@/ui/theme';
 import { showToast } from '@/ui/toast';
 import { TrackMenu } from '@/ui/TrackMenu';
 import { TRACK_ROW_HEIGHT, TrackRow } from '@/ui/TrackRow';
+import { useTrackActions } from '@/ui/useTrackActions';
 
 const errorMessage = (e: unknown) => (e instanceof Error ? e.message : String(e));
 
@@ -40,7 +41,28 @@ export default function PlaylistScreen() {
   const { t } = useTranslation();
   const colors = useColors();
   const db = useDb();
-  const id = Number(useLocalSearchParams<{ id: string }>().id);
+  const params = useLocalSearchParams<{
+    id: string;
+    matched?: string;
+    unmatched?: string;
+    added?: string;
+    reimport?: string;
+  }>();
+  const id = Number(params.id);
+  const actions = useTrackActions();
+  const importLine =
+    params.matched === undefined
+      ? null
+      : params.reimport === '1'
+        ? t('playlists.reimportResult', {
+            added: Number(params.added),
+            matched: Number(params.matched),
+            unmatched: Number(params.unmatched),
+          })
+        : t('playlists.importResult', {
+            matched: Number(params.matched),
+            unmatched: Number(params.unmatched),
+          });
   const load = useCallback(
     async (d: Db) => ({ playlist: await getPlaylist(d, id), items: await playlistItems(d, id) }),
     [id],
@@ -118,21 +140,28 @@ export default function PlaylistScreen() {
           <DetailHeader
             artwork={<Icon name="queue_music" size={96} color={colors.textSecondary} />}
             title={playlist?.name ?? ''}
-            lines={[playlist ? t('common.tracks', { count: playlist.trackCount }) : null]}
+            lines={[
+              playlist ? t('common.tracks', { count: playlist.trackCount }) : null,
+              importLine === null ? null : (
+                <AppText variant="secondary" testID="playlist-import-result">
+                  {importLine}
+                </AppText>
+              ),
+            ]}
             actions={
               <>
                 <Button
                   testID="playlist-play"
                   label={t('common.play')}
                   disabled={tracks.length === 0}
-                  onPress={() => void usePlayerStore.getState().playTracks(tracks, 0)}
+                  onPress={() => void actions.play(tracks, 0)}
                 />
                 <Button
                   testID="playlist-shuffle"
                   variant="secondary"
                   label={t('common.shuffle')}
                   disabled={tracks.length === 0}
-                  onPress={() => void usePlayerStore.getState().shuffleTracks(tracks)}
+                  onPress={() => void actions.shuffle(tracks)}
                 />
                 <IconButton
                   testID="playlist-more"
@@ -157,7 +186,7 @@ export default function PlaylistScreen() {
             leading={handle}
             testID={`playlist-item-${index}`}
             current={item.track.id === currentTrackId}
-            onPress={() => void usePlayerStore.getState().playTracks(tracks, index)}
+            onPress={() => void actions.play(tracks, index)}
             onMore={() => setMenu({ track: item.track, index })}
           />
         )}

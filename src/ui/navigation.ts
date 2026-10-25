@@ -22,8 +22,27 @@ export function openArtist(name: string): void {
   router.push({ pathname: '/artist', params: { name } });
 }
 
-export function openPlaylist(id: number): void {
-  router.push({ pathname: '/playlist/[id]', params: { id: String(id) } });
+/** Counts shown on the playlist screen right after an import. */
+export interface ImportSummary {
+  matched: number;
+  unmatched: number;
+  added: number;
+  reimport: boolean;
+}
+
+export function openPlaylist(id: number, imported?: ImportSummary): void {
+  router.push({
+    pathname: '/playlist/[id]',
+    params: imported
+      ? {
+          id: String(id),
+          matched: String(imported.matched),
+          unmatched: String(imported.unmatched),
+          added: String(imported.added),
+          reimport: imported.reimport ? '1' : '0',
+        }
+      : { id: String(id) },
+  });
 }
 
 export function openAddToPlaylist(trackIds: readonly number[]): void {

@@ -188,6 +188,11 @@ export default ({ config }: ConfigContext): ExpoConfig =>
               },
             ],
             ['expo-sqlite', { enableFTS: true }],
+            // Receives playlist files from the share sheet (Nuclear exports, Aulos exports).
+            [
+              'expo-sharing',
+              { android: { enabled: true, singleShareMimeTypes: ['application/json'] } },
+            ],
             [
               'expo-audio',
               {

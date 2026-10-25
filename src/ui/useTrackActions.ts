@@ -1,7 +1,7 @@
 import { useTranslation } from 'react-i18next';
 
 import { useDb } from '@/db/DbProvider';
-import { LOCAL_PROVIDER } from '@/library/providers';
+import { LOCAL_PROVIDER, UNAVAILABLE_PROVIDER } from '@/library/providers';
 import { storeTracks } from '@/providers/store';
 import { isStoredTrack, type TrackItem } from '@/providers/types';
 import { useDownloadsStore } from '@/stores/downloads';
@@ -9,6 +9,10 @@ import { usePlayerStore } from '@/stores/player';
 
 import { openAddToPlaylist, openAlbum, openArtist, openRemoteAlbum } from './navigation';
 import { showToast } from './toast';
+
+export function isAvailable(item: TrackItem): boolean {
+  return item.provider !== UNAVAILABLE_PROVIDER;
+}
 
 /**
  * Queue, playlist, download and navigation actions shared by every track list. Remote tracks
@@ -19,21 +23,31 @@ export function useTrackActions() {
   const { t } = useTranslation();
   const db = useDb();
   const store = (items: readonly TrackItem[]) => storeTracks(db, items);
+  /** Imported Nuclear rows that matched nothing are listed but never queued. */
+  const playable = (items: readonly TrackItem[]) => items.filter(isAvailable);
 
   return {
     async play(items: readonly TrackItem[], index: number) {
-      await usePlayerStore.getState().playTracks(await store(items), index);
+      const tapped = items[index];
+      if (tapped && !isAvailable(tapped)) {
+        showToast(t('track.unavailableToast', { title: tapped.title }));
+        return;
+      }
+      const start = playable(items.slice(0, index)).length;
+      await usePlayerStore.getState().playTracks(await store(playable(items)), start);
     },
     async shuffle(items: readonly TrackItem[]) {
-      await usePlayerStore.getState().shuffleTracks(await store(items));
+      await usePlayerStore.getState().shuffleTracks(await store(playable(items)));
     },
     async playNext(items: readonly TrackItem[]) {
-      await usePlayerStore.getState().playNext(await store(items));
-      showToast(t('track.queuedNext', { count: items.length }));
+      const kept = playable(items);
+      await usePlayerStore.getState().playNext(await store(kept));
+      showToast(t('track.queuedNext', { count: kept.length }));
     },
     async addToQueue(items: readonly TrackItem[]) {
-      await usePlayerStore.getState().addToQueue(await store(items));
-      showToast(t('track.queued', { count: items.length }));
+      const kept = playable(items);
+      await usePlayerStore.getState().addToQueue(await store(kept));
+      showToast(t('track.queued', { count: kept.length }));
     },
     async addToPlaylist(items: readonly TrackItem[]) {
       openAddToPlaylist((await store(items)).map((track) => track.id));

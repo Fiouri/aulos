@@ -1,0 +1,127 @@
+{
+  "version": 1,
+  "playlist": {
+    "id": "8c0f2a64-5d1e-4c7b-9a43-aulos-fixture",
+    "name": "Nuclear Mix",
+    "createdAtIso": "2026-10-20T18:00:00.000Z",
+    "lastModifiedIso": "2026-10-24T09:30:00.000Z",
+    "isReadOnly": false,
+    "items": [
+      {
+        "id": "item-1",
+        "track": {
+          "title": "Τα Παιδιά του Πειραιά",
+          "artists": [
+            {
+              "name": "Μάνος Χατζιδάκις",
+              "roles": ["main"]
+            }
+          ],
+          "source": {
+            "provider": "youtube",
+            "id": "yt-peiraia"
+          },
+          "durationMs": 2000,
+          "album": {
+            "title": "Ο Μεγάλος Ερωτικός",
+            "source": {
+              "provider": "musicbrainz",
+              "id": "rel-yt-peiraia"
+            }
+          }
+        },
+        "addedAtIso": "2026-10-20T18:00:00.000Z"
+      },
+      {
+        "id": "item-2",
+        "track": {
+          "title": "Café del Mar",
+          "artists": [
+            {
+              "name": "Mötley Beyoncé",
+              "roles": ["main"]
+            }
+          ],
+          "source": {
+            "provider": "soundcloud",
+            "id": "sc-cafe"
+          },
+          "durationMs": 3100
+        },
+        "addedAtIso": "2026-10-20T18:00:00.000Z"
+      },
+      {
+        "id": "item-3",
+        "track": {
+          "title": "Gapless part 2",
+          "artists": [
+            {
+              "name": "Aulos Test",
+              "roles": ["main"]
+            }
+          ],
+          "source": {
+            "provider": "local",
+            "id": "file-gapless-2"
+          },
+          "durationMs": 3000
+        },
+        "addedAtIso": "2026-10-20T18:00:00.000Z"
+      },
+      {
+        "id": "item-4",
+        "track": {
+          "title": "Unknown Song",
+          "artists": [
+            {
+              "name": "Nobody",
+              "roles": ["main"]
+            }
+          ],
+          "source": {
+            "provider": "youtube",
+            "id": "yt-unknown"
+          },
+          "durationMs": 241000
+        },
+        "addedAtIso": "2026-10-20T18:00:00.000Z"
+      },
+      {
+        "id": "item-5",
+        "track": {
+          "title": "Τα Παιδιά του Πειραιά",
+          "artists": [
+            {
+              "name": "Μάνος Χατζιδάκις",
+              "roles": ["main"]
+            }
+          ],
+          "source": {
+            "provider": "youtube",
+            "id": "yt-peiraia"
+          },
+          "durationMs": 2000
+        },
+        "addedAtIso": "2026-10-20T18:00:00.000Z"
+      },
+      {
+        "id": "item-6",
+        "track": {
+          "title": "Señorita",
+          "artists": [
+            {
+              "name": "Mötley Beyoncé",
+              "roles": ["main"]
+            }
+          ],
+          "source": {
+            "provider": "youtube",
+            "id": "yt-senorita-live"
+          },
+          "durationMs": 60000
+        },
+        "addedAtIso": "2026-10-20T18:00:00.000Z"
+      }
+    ]
+  }
+}

@@ -10,6 +10,7 @@ import {
   type AudioPermission,
 } from '@/library/permission';
 import { countLocalTracks, scanLibrary, type ScanResult } from '@/library/scan';
+import { rematchUnavailable } from '@/nuclear/playlistImport';
 
 export const LAST_SCAN_KEY = 'library.lastScan';
 export const EXCLUDED_FOLDERS_KEY = 'library.excludedFolders';
@@ -108,6 +109,8 @@ export const useLibraryStore = create<LibraryState>()((set, get) => ({
       // Read the token first: a change during the scan then triggers one more scan later.
       const { token } = await getVersion();
       const result = await scanLibrary(db, { excludedFolders: get().excludedFolders });
+      // Imported Nuclear rows that were unavailable may now have a file on the phone.
+      if (result.added + result.updated > 0) await rematchUnavailable(db);
       const lastScan: LastScan = { at: Date.now(), result };
       await setKv(db, LAST_SCAN_KEY, lastScan);
       await setKv(db, MEDIA_VERSION_KEY, token);

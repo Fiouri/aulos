@@ -3,6 +3,7 @@ import { File, Paths } from 'expo-file-system';
 import * as Sharing from 'expo-sharing';
 
 import type { Db } from '@/db/types';
+import { importNuclearPlaylist, parseNuclearPlaylist } from '@/nuclear/playlistImport';
 
 import {
   buildPlaylistFile,
@@ -39,6 +40,37 @@ export async function exportPlaylist(db: Db, playlist: Playlist): Promise<void> 
 
 export interface PickedImport extends ImportResult {
   name: string;
+  /** A Nuclear playlist imported before was updated additively. */
+  reimport: boolean;
+  /** Rows appended by this import. */
+  added: number;
+}
+
+/**
+ * Imports a playlist file from a content:// or file:// URI: Nuclear's export or legacy format
+ * (matched against the phone, unmatched items kept as unavailable rows), or an Aulos file.
+ */
+export async function importPlaylistFromUri(
+  db: Db,
+  uri: string,
+  fallbackName: string,
+): Promise<PickedImport> {
+  let json: unknown;
+  try {
+    json = JSON.parse(await new File(uri).text());
+  } catch {
+    throw new PlaylistFileError('The file is not valid JSON.');
+  }
+  const nuclear = parseNuclearPlaylist(json);
+  if (nuclear) return importNuclearPlaylist(db, nuclear, fallbackName);
+  const file = parsePlaylistFile(json);
+  const result = await importPlaylistFile(db, file, fallbackName);
+  return {
+    ...result,
+    name: file.name.trim() || fallbackName,
+    reimport: false,
+    added: result.matched,
+  };
 }
 
 /** Lets the user pick a playlist file and imports it; null when the picker was cancelled. */
@@ -54,13 +86,5 @@ export async function importPlaylistFromPicker(
   if (picked.canceled) return null;
   const asset = picked.assets[0];
   if (!asset) return null;
-  let json: unknown;
-  try {
-    json = JSON.parse(await new File(asset.uri).text());
-  } catch {
-    throw new PlaylistFileError('The file is not valid JSON.');
-  }
-  const file = parsePlaylistFile(json);
-  const result = await importPlaylistFile(db, file, fallbackName);
-  return { ...result, name: file.name.trim() || fallbackName };
+  return importPlaylistFromUri(db, asset.uri, fallbackName);
 }

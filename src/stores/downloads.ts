@@ -9,6 +9,9 @@ import {
 } from '@/downloads/manager';
 import { getTracks, type Track } from '@/library/queries';
 
+import { rematchUnavailable } from '@/nuclear/playlistImport';
+
+import { useCollectionsStore } from './collections';
 import { useLibraryStore } from './library';
 import { useNetworkStore } from './network';
 import { useSettingsStore } from './settings';
@@ -109,7 +112,12 @@ export const useDownloadsStore = create<DownloadsState>()((set) => {
         onChange: () => void refresh(),
         onProgress: (trackId, bytesDone, bytesTotal) =>
           set((s) => ({ progress: { ...s.progress, [trackId]: { bytesDone, bytesTotal } } })),
-        onLibraryChange: () => useLibraryStore.getState().touch(),
+        onLibraryChange: () => {
+          useLibraryStore.getState().touch();
+          void rematchUnavailable(db).then((n) => {
+            if (n > 0) useCollectionsStore.getState().bump();
+          });
+        },
       });
       deps.files.ensureDir(deps.dir);
       const unsubscribe = useNetworkStore.subscribe((state, previous) => {

@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { Pressable, StyleSheet, View } from 'react-native';
 
 import { trackArtworkSource } from '@/library/artwork';
+import { UNAVAILABLE_PROVIDER } from '@/library/providers';
 import { isStoredTrack, type TrackItem } from '@/providers/types';
 
 import { AppText } from './AppText';
@@ -45,7 +46,11 @@ export function TrackRow({
 }: TrackRowProps) {
   const { t } = useTranslation();
   const colors = useColors();
-  const subtitle = [track.artist ?? t('common.unknownArtist'), track.album]
+  const unavailable = track.provider === UNAVAILABLE_PROVIDER;
+  const subtitle = [
+    track.artist ?? t('common.unknownArtist'),
+    unavailable ? t('track.unavailable') : track.album,
+  ]
     .filter(Boolean)
     .join(' · ');
 
@@ -56,10 +61,12 @@ export function TrackRow({
       accessibilityState={selecting ? { checked: selected } : { selected: current }}
       onPress={onPress}
       onLongPress={onLongPress}
+      accessibilityHint={unavailable ? t('track.unavailable') : undefined}
       style={({ pressed }) => [
         styles.row,
         (pressed || selected) && { backgroundColor: colors.selected },
         leading !== undefined && styles.withLeading,
+        unavailable && styles.unavailable,
       ]}>
       {leading}
       {selecting && (
@@ -107,5 +114,6 @@ const styles = StyleSheet.create({
   },
   withLeading: { paddingLeft: 0, gap: Spacing.sm },
   number: { width: 28, textAlign: 'center' },
+  unavailable: { opacity: 0.45 },
   text: { flex: 1, gap: 2 },
 });

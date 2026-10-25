@@ -38,13 +38,19 @@ export function PlaylistsSection({ header }: { header: ReactElement }) {
       if (!result) return;
       useCollectionsStore.getState().bump();
       showToast(
-        t('playlists.imported', {
-          name: result.name,
-          matched: result.matched,
-          unmatched: result.unmatched,
-        }),
+        result.reimport
+          ? t('playlists.reimported', {
+              name: result.name,
+              added: result.added,
+              unmatched: result.unmatched,
+            })
+          : t('playlists.imported', {
+              name: result.name,
+              matched: result.matched,
+              unmatched: result.unmatched,
+            }),
       );
-      openPlaylist(result.playlistId);
+      openPlaylist(result.playlistId, result);
     } catch (e) {
       showToast(t('playlists.importFailed', { message: errorMessage(e) }));
     }

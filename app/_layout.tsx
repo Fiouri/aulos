@@ -89,6 +89,7 @@ function AppStack() {
       <Stack.Screen name="folders" options={{ title: t('settings.folders') }} />
       <Stack.Screen name="sources" options={{ title: t('sources.title') }} />
       <Stack.Screen name="downloads" options={{ title: t('downloads.title') }} />
+      <Stack.Screen name="import-shared" options={{ title: t('playlists.import') }} />
       <Stack.Screen
         name="add-to-playlist"
         options={{ title: t('playlists.chooseTitle'), presentation: 'modal' }}
