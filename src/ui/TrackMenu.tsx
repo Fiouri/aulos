@@ -7,6 +7,7 @@ import { isStoredTrack, type TrackItem } from '@/providers/types';
 
 import { MenuSheet, type MenuItem } from './MenuSheet';
 import { TrackInfoSheet } from './TrackInfoSheet';
+import { useSendToPc } from './useSendToPc';
 import { useTrackActions } from './useTrackActions';
 import { useTrackFavorite } from './useTrackFavorite';
 
@@ -27,6 +28,7 @@ export function TrackMenu<T extends TrackItem>({
   const actions = useTrackActions();
   const [favorite, toggleFavorite] = useTrackFavorite(track);
   const [info, setInfo] = useState<TrackItem | null>(null);
+  const sendToPc = useSendToPc();
 
   const inLibrary = track !== null && isStoredTrack(track) && track.localPath !== null;
   const downloadable =
@@ -95,6 +97,12 @@ export function TrackMenu<T extends TrackItem>({
               },
             ]
           : []),
+        {
+          label: t('track.sendToPc'),
+          icon: 'computer',
+          testID: 'menu-send-to-pc',
+          onPress: () => void sendToPc(track),
+        },
         {
           label: t('track.info'),
           icon: 'info',

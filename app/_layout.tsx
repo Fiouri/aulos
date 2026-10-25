@@ -22,6 +22,7 @@ import {
 } from '@/providers/appProviders';
 import { useDownloadsStore } from '@/stores/downloads';
 import { useNetworkStore } from '@/stores/network';
+import { usePcStore } from '@/stores/pc';
 import { usePlayerStore } from '@/stores/player';
 import { useSettingsStore } from '@/stores/settings';
 import { AppText } from '@/ui/AppText';
@@ -39,6 +40,7 @@ const onDbReady = async (db: Db) => {
   const registry = initProviders(db);
   for (const id of useSettingsStore.getState().disabledProviders) registry.setEnabled(id, false);
   await useNetworkStore.getState().start(getNetworkStatus, onNetworkChange);
+  usePcStore.getState().init(db);
   try {
     await useDownloadsStore.getState().init(db, {
       provider: enabledProvider,
@@ -90,6 +92,11 @@ function AppStack() {
       <Stack.Screen name="sources" options={{ title: t('sources.title') }} />
       <Stack.Screen name="downloads" options={{ title: t('downloads.title') }} />
       <Stack.Screen name="import-shared" options={{ title: t('playlists.import') }} />
+      <Stack.Screen name="pc-search" options={{ title: t('pc.search') }} />
+      <Stack.Screen
+        name="send-to-pc"
+        options={{ title: t('pc.candidatesTitle'), presentation: 'modal' }}
+      />
       <Stack.Screen
         name="add-to-playlist"
         options={{ title: t('playlists.chooseTitle'), presentation: 'modal' }}

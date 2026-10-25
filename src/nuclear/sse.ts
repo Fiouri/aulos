@@ -240,3 +240,47 @@ export class SseConnection {
     }
   }
 }
+
+/** The platform XMLHttpRequest behind the XhrLike interface. */
+export function platformXhr(): XhrLike {
+  const xhr = new XMLHttpRequest();
+  let onprogress: (() => void) | null = null;
+  let onreadystatechange: (() => void) | null = null;
+  let onerror: (() => void) | null = null;
+  return {
+    get readyState() {
+      return xhr.readyState;
+    },
+    get status() {
+      return xhr.status;
+    },
+    get responseText() {
+      return xhr.responseText;
+    },
+    get onprogress() {
+      return onprogress;
+    },
+    set onprogress(handler) {
+      onprogress = handler;
+      xhr.onprogress = handler ? () => handler() : null;
+    },
+    get onreadystatechange() {
+      return onreadystatechange;
+    },
+    set onreadystatechange(handler) {
+      onreadystatechange = handler;
+      xhr.onreadystatechange = handler ? () => handler() : null;
+    },
+    get onerror() {
+      return onerror;
+    },
+    set onerror(handler) {
+      onerror = handler;
+      xhr.onerror = handler ? () => handler() : null;
+    },
+    open: (method, url) => xhr.open(method, url),
+    setRequestHeader: (name, value) => xhr.setRequestHeader(name, value),
+    send: () => xhr.send(),
+    abort: () => xhr.abort(),
+  };
+}

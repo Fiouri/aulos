@@ -19,6 +19,10 @@ export default function TabsLayout() {
         <NativeTabs.Trigger.Label>{t('tabs.search')}</NativeTabs.Trigger.Label>
         <NativeTabs.Trigger.Icon md="search" />
       </NativeTabs.Trigger>
+      <NativeTabs.Trigger name="pc">
+        <NativeTabs.Trigger.Label>{t('tabs.pc')}</NativeTabs.Trigger.Label>
+        <NativeTabs.Trigger.Icon md="computer" />
+      </NativeTabs.Trigger>
       <NativeTabs.Trigger name="settings">
         <NativeTabs.Trigger.Label>{t('tabs.settings')}</NativeTabs.Trigger.Label>
         <NativeTabs.Trigger.Icon md="settings" />
