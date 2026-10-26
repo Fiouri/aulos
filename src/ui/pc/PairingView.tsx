@@ -226,23 +226,26 @@ export function PairingView() {
       {pairings.length > 0 && (
         <Card>
           <AppText variant="heading">{t('pc.saved')}</AppText>
-          {pairings.map((pairing, index) => (
-            <ListRow
-              key={pairing.id}
-              testID={`pc-pairing-${index}`}
-              title={pairing.name}
-              subtitle={pairing.baseUrl.replace(/^http:\/\//, '')}
-              onPress={() => usePcStore.getState().connect(pairing)}
-              trailing={
-                <IconButton
-                  testID={`pc-pairing-more-${index}`}
-                  icon="more_vert"
-                  label={t('common.more')}
-                  onPress={() => setMenu(pairing)}
-                />
-              }
-            />
-          ))}
+          {pairings.map((pairing, index) => {
+            const address = pairing.baseUrl.replace(/^http:\/\//, '');
+            return (
+              <ListRow
+                key={pairing.id}
+                testID={`pc-pairing-${index}`}
+                title={pairing.name}
+                subtitle={pairing.name === address ? undefined : address}
+                onPress={() => usePcStore.getState().connect(pairing)}
+                trailing={
+                  <IconButton
+                    testID={`pc-pairing-more-${index}`}
+                    icon="more_vert"
+                    label={t('common.more')}
+                    onPress={() => setMenu(pairing)}
+                  />
+                }
+              />
+            );
+          })}
         </Card>
       )}
 

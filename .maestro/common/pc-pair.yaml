@@ -1,5 +1,6 @@
-# Pairs with the Jam server at ${JAM_HOST} by manual entry and waits for the live connection.
-# The security notice shows once per fresh install.
+# Pairs with the Jam server at JAM_HOST (default: mock-jam on the emulator's host,
+# 10.0.2.2:4125; real PC: -e JAM_HOST=<LAN IP>:<port>) by manual entry and waits for the live
+# connection. The security notice shows once per fresh install.
 appId: com.anywecon.aulos
 ---
 - tapOn: 'PC'
@@ -12,7 +13,7 @@ appId: com.anywecon.aulos
           id: 'pc-notice-ok'
 - tapOn:
     id: 'pc-host-input'
-- inputText: ${JAM_HOST}
+- inputText: "${typeof JAM_HOST === 'undefined' ? '10.0.2.2:4125' : JAM_HOST}"
 - hideKeyboard
 - tapOn:
     id: 'pc-host-connect'

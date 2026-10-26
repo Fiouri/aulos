@@ -5,7 +5,6 @@ appId: com.anywecon.aulos
 tags:
   - mock-jam
 env:
-  JAM_HOST: 10.0.2.2:4125
   MOCK_JAM_ADMIN: http://127.0.0.1:4125
 onFlowComplete:
   # Leave the mock with its starting queue for the flows that run after this one.

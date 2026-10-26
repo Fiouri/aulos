@@ -1,8 +1,6 @@
 # Manual pairing with Nuclear Jam: address entry, health check, Connected badge, saved PC.
-# Emulator: mock-jam at 10.0.2.2:4125 (default). S23: -e JAM_HOST=<PC LAN IP>:<port>.
+# Emulator: mock-jam at 10.0.2.2:4125 (default). Real PC: -e JAM_HOST=<PC LAN IP>:<port>.
 appId: com.anywecon.aulos
-env:
-  JAM_HOST: 10.0.2.2:4125
 ---
 - runFlow: common/fresh-start.yaml
 - runFlow: common/pc-pair.yaml

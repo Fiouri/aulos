@@ -1,8 +1,6 @@
 # Remote controls reflected in the PC's state (from the event stream): play/pause, next,
 # seek and volume. Works against mock-jam and the real Nuclear (needs a queue on the PC).
 appId: com.anywecon.aulos
-env:
-  JAM_HOST: 10.0.2.2:4125
 ---
 - runFlow: common/fresh-start.yaml
 - runFlow: common/pc-pair.yaml
