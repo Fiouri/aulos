@@ -27,7 +27,8 @@ appId: com.anywecon.aulos
       text: 'Pause'
     timeout: 5000
 
-# Next: the title changes (polled from the screen; titles may contain regex characters).
+# Next (or previous when the PC is on the last track without repeat): the title changes.
+# Polled from the screen; titles may contain regex characters.
 - copyTextFrom:
     id: 'pc-title'
 - evalScript: ${output.before = maestro.copiedText}
@@ -40,6 +41,19 @@ appId: com.anywecon.aulos
     commands:
       - copyTextFrom:
           id: 'pc-title'
+- runFlow:
+    when:
+      true: ${maestro.copiedText === output.before}
+    commands:
+      - tapOn:
+          id: 'pc-previous'
+      - repeat:
+          times: 15
+          while:
+            true: ${maestro.copiedText === output.before}
+          commands:
+            - copyTextFrom:
+                id: 'pc-title'
 - assertTrue: ${maestro.copiedText !== output.before}
 
 # Seek to 60 %: the position passes a third of the track.

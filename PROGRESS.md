@@ -1,6 +1,13 @@
-**Current:** M2 Sources and downloads — closed; gate green on the S23 and the API 31 emulator
-**Next step:** Owner: try Wi-Fi only on real mobile data and a longer stream on a weak connection; confirm the GitHub repository URL for the User-Agent; then M3 (Nuclear pairing)
-**Last session:** 2026-10-25 — M2: Internet Archive search/stream/download, DownloadManager with resume, Wi-Fi-only gate and storage limit; typecheck, lint, 232 tests, R8 release build, Maestro 10/10 S23 and 9/9 API 31; fixed a media3 crash with short repeat-all queues
+**Current:** M3 Nuclear pairing — closed; gate green on the S23 (real Nuclear Jam) and the API 31 emulator (mock-jam), Tailscale check open
+**Next step:** Owner: let TCP 4120 through on the PC's Tailscale interface (VPN client or third-party firewall) and pair by 100.x; export a playlist from Nuclear and share it to Aulos; decide on the Aulos Link plugin (docs/spikes/aulos-link.md); then M4
+**Last session:** 2026-10-26 — M3: private-network cleartext guard, Jam client + SSE, Wi-Fi discovery and manual pairing, PC tab remote and queue, Send to PC, Nuclear playlist import, Aulos Link spike; typecheck, lint, 327 tests, R8 release build, Maestro 13/13 API 31 and S23 (remote flow re-run after a state-dependent failure)
+
+## M3 Nuclear pairing (closed 2026-10-26)
+
+- **Done:** network guard (HTTP only to LAN/Tailscale/MagicDNS hosts, HTTPS elsewhere, enforced in every request path and the player); typed Nuclear Jam client with zod schemas and an XHR-based event stream (reconnect backoff, stale detection, background stop); Wi-Fi discovery (ports 4120–4129) and manual pairing with saved PCs; PC tab (status, now playing, transport, seek, volume, shuffle/repeat, favourite, PC queue, save queue as playlist, PC search); Send to PC from the track menu with candidates fallback; import of Nuclear playlists (export and legacy) from the picker and the share sheet with unavailable rows. No new dependency or permission; cleartext permitted at platform level, controlled in app code.
+- **Verified:** typecheck, lint, 327 unit tests, `gradlew lint assembleRelease` with R8, Maestro 13/13 on API 31 against mock-jam and on the S23 against Nuclear 1.51.x. S23: discovery finds the PC, PC → phone update in ~0.1 s, Send to PC adds the chosen track, imported Nuclear playlist plays and greys unmatched rows, public HTTP refused. Details in `SESSIONS.md`.
+- **Open risks:** Jam has no authentication (LAN users can control the PC); discovery is refused while a VPN is up on the phone; matching is exact (Greek vs Latin names fall back to candidates); any future network library must use the guard.
+- **Device testing (owner):** Tailscale pairing by 100.x (blocked by the PC firewall/VPN during the session); Tailscale over mobile data; M2 Wi-Fi only on mobile data; a real Nuclear export via the share sheet; M1 hardware items.
 
 ## M2 Sources and downloads (closed 2026-10-25)
 
