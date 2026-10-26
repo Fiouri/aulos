@@ -86,14 +86,14 @@ only narrowly scoped operations.
 
 Run with curl from this PC against `http://192.168.1.50:4120` while `/api/events` was open:
 
-| Check | Result |
-|-------|--------|
-| `POST /api/settings/plugin.aulos-link.probe` `{"id":"r1","op":"ping"}`, then `GET` | `200`, value read back unchanged (no plugin registered: unregistered IDs are writable) |
-| `GET` of a never-written ID | `200` with `null` |
-| ~1 MB body | `200` in 36 ms; `GET` returned the full 1,000,011 bytes |
-| ~3 MB body | `413` "Failed to buffer the request body: length limit exceeded" (axum's 2 MB default) |
-| `settings` SSE events | one per successful write (3 writes → 3 events), payload is the fixed snapshot |
-| Restore | `POST … null`; the key now reads `null` (Nuclear keeps the key with a `null` value in its settings file; there is no delete endpoint) |
+| Check                                                                              | Result                                                                                                                                |
+| ---------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
+| `POST /api/settings/plugin.aulos-link.probe` `{"id":"r1","op":"ping"}`, then `GET` | `200`, value read back unchanged (no plugin registered: unregistered IDs are writable)                                                |
+| `GET` of a never-written ID                                                        | `200` with `null`                                                                                                                     |
+| ~1 MB body                                                                         | `200` in 36 ms; `GET` returned the full 1,000,011 bytes                                                                               |
+| ~3 MB body                                                                         | `413` "Failed to buffer the request body: length limit exceeded" (axum's 2 MB default)                                                |
+| `settings` SSE events                                                              | one per successful write (3 writes → 3 events), payload is the fixed snapshot                                                         |
+| Restore                                                                            | `POST … null`; the key now reads `null` (Nuclear keeps the key with a `null` value in its settings file; there is no delete endpoint) |
 
 ## Verdict: conditional GO (not before M4 planning)
 
