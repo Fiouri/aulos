@@ -26,6 +26,7 @@ import { usePcStore } from '@/stores/pc';
 import { usePlayerStore } from '@/stores/player';
 import { useSettingsStore } from '@/stores/settings';
 import { AppText } from '@/ui/AppText';
+import { ErrorBoundary } from '@/ui/ErrorBoundary';
 import { Spacing, useColors } from '@/ui/theme';
 
 void SplashScreen.preventAutoHideAsync();
@@ -91,6 +92,7 @@ function AppStack() {
       <Stack.Screen name="folders" options={{ title: t('settings.folders') }} />
       <Stack.Screen name="sources" options={{ title: t('sources.title') }} />
       <Stack.Screen name="downloads" options={{ title: t('downloads.title') }} />
+      <Stack.Screen name="licences" options={{ title: t('licences.title') }} />
       <Stack.Screen name="import-shared" options={{ title: t('playlists.import') }} />
       <Stack.Screen name="pc-search" options={{ title: t('pc.search') }} />
       <Stack.Screen
@@ -110,7 +112,7 @@ function AppStack() {
   );
 }
 
-export default function RootLayout() {
+function Root() {
   const state = useOpenDb(onDbReady);
   const theme = useSettingsStore((s) => s.theme);
   const scheme = useColorScheme();
@@ -135,6 +137,14 @@ export default function RootLayout() {
         </DbProvider>
       </ThemeProvider>
     </GestureHandlerRootView>
+  );
+}
+
+export default function RootLayout() {
+  return (
+    <ErrorBoundary>
+      <Root />
+    </ErrorBoundary>
   );
 }
 

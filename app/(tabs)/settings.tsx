@@ -1,9 +1,10 @@
 import Constants from 'expo-constants';
 import { router } from 'expo-router';
 import { useTranslation } from 'react-i18next';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { Linking, Pressable, StyleSheet, View } from 'react-native';
 
 import { useDb } from '@/db/DbProvider';
+import { repositoryUrl } from '@/net/client';
 import { useDownloadsStore } from '@/stores/downloads';
 import { useLibraryStore } from '@/stores/library';
 import { THEME_PREFERENCES, useSettingsStore, type ThemePreference } from '@/stores/settings';
@@ -31,6 +32,7 @@ export default function SettingsScreen() {
   const usedBytes = useDownloadsStore((s) => s.usedBytes);
   const limitBytes = useSettingsStore((s) => s.downloads.limitBytes);
   const version = Constants.expoConfig?.version ?? '–';
+  const repository = repositoryUrl();
 
   return (
     <View style={[styles.fill, { backgroundColor: colors.background }]}>
@@ -122,6 +124,37 @@ export default function SettingsScreen() {
             <AppText>{t('settings.licenceId')}</AppText>
           </View>
           <AppText variant="secondary">{t('settings.licenceText')}</AppText>
+          {repository && (
+            <Pressable
+              testID="settings-source"
+              accessibilityRole="link"
+              onPress={() => void Linking.openURL(repository)}
+              style={styles.link}>
+              <Icon name="code" color={colors.textSecondary} />
+              <View style={styles.fill}>
+                <AppText>{t('settings.sourceCode')}</AppText>
+                <AppText variant="secondary">{repository}</AppText>
+              </View>
+            </Pressable>
+          )}
+          <Pressable
+            testID="settings-licences"
+            accessibilityRole="button"
+            onPress={() => router.push('/licences')}
+            style={styles.link}>
+            <Icon name="description" color={colors.textSecondary} />
+            <View style={styles.fill}>
+              <AppText>{t('settings.thirdParty')}</AppText>
+              <AppText variant="secondary">{t('settings.thirdPartySummary')}</AppText>
+            </View>
+          </Pressable>
+        </Card>
+
+        <Card>
+          <AppText variant="heading">{t('settings.privacy')}</AppText>
+          <AppText testID="settings-privacy" variant="secondary">
+            {t('settings.privacyText')}
+          </AppText>
         </Card>
       </Screen>
       <MiniPlayer />

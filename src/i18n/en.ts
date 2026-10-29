@@ -335,6 +335,26 @@ export const en = {
     licenceId: 'GPL-3.0-or-later',
     licenceText:
       'Aulos is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License, version 3 or any later version.',
+    sourceCode: 'Source code',
+    thirdParty: 'Third-party licences',
+    thirdPartySummary: 'Open-source packages Aulos is built with',
+    privacy: 'Privacy',
+    privacyText:
+      'No accounts, no tracking, no analytics. Aulos only uses the network for the Internet Archive and your own PC.',
+  },
+  licences: {
+    title: 'Third-party licences',
+    intro:
+      '{{count}} packages from the production dependency tree, with the licence each one ships.',
+    noText: 'This package ships no licence file. Its declared licence is {{licence}}.',
+    unknown: 'Not declared',
+  },
+  crash: {
+    title: 'Something went wrong',
+    body: 'Aulos hit an error it could not recover from. Copy the error details to report it, then restart. Your library, playlists and downloads are safe.',
+    copy: 'Copy error details',
+    copied: 'Copied',
+    restart: 'Restart',
   },
 } as const;
 
