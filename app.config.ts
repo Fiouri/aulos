@@ -268,6 +268,8 @@ android {`,
                 keyAlias findProperty('AULOS_KEY_ALIAS')
                 keyPassword findProperty('AULOS_KEY_PASSWORD')
             }
+            enableV2Signing true
+            enableV3Signing true
         }`,
     );
     contents = contents.replace(
@@ -276,7 +278,7 @@ android {`,
     );
     contents += `
 def aulosCheckReleaseSigning = tasks.register('aulosCheckReleaseSigning') {
-    def missing = aulosMissingSigning
+    def missing = aulosUnsignedRelease ? [] : aulosMissingSigning
     doLast {
         if (!missing.isEmpty()) {
             throw new GradleException("Release signing is not configured: " +
@@ -285,7 +287,9 @@ def aulosCheckReleaseSigning = tasks.register('aulosCheckReleaseSigning') {
         }
     }
 }
-tasks.matching { it.name == 'validateSigningRelease' }.configureEach {
+def aulosSignedReleaseTasks = ['validateSigningRelease', 'packageRelease',
+    'packageReleaseUniversalApk', 'packageReleaseBundle', 'signReleaseBundle']
+tasks.matching { it.name in aulosSignedReleaseTasks }.configureEach {
     dependsOn aulosCheckReleaseSigning
 }
 `;

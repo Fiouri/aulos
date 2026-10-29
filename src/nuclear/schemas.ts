@@ -40,7 +40,8 @@ export type JamTrack = z.infer<typeof trackSchema>;
 export const queueItemSchema = z.looseObject({
   id: z.string(),
   track: trackSchema,
-  status: z.string(),
+  // Absent while Nuclear is still resolving the item's stream (seen with Nuclear 1.51).
+  status: z.string().optional(),
   error: z.string().optional(),
   addedAtIso: z.string(),
 });

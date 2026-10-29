@@ -1,0 +1,1 @@
+First release candidate: offline library with gapless playback, playlists, favourites and accent-insensitive search; Internet Archive streaming and downloads; Nuclear remote control, PC queue and playlist import; About screen with third-party licences; error screen with copyable details; new icon; per-ABI APKs.

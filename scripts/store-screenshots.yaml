@@ -1,0 +1,59 @@
+# Screenshots for the README (docs/screenshots/) and the F-Droid listing, taken on the S23 with
+# the standard test media (scripts/test-media.ps1) and a paired Nuclear PC. Not part of the
+# test suite. Maestro writes the PNGs under its run folder
+# (~/.maestro/tests/<run>/store-screenshots/takeScreenshot/docs/screenshots/); copy them to
+# docs/screenshots/ and fastlane/metadata/android/en-US/images/phoneScreenshots/.
+#   maestro --device <serial> test -e JAM_HOST=<PC IP>:4120 scripts/store-screenshots.yaml
+appId: com.anywecon.aulos
+---
+- runFlow: ../.maestro/common/fresh-start.yaml
+- runFlow:
+    file: ../.maestro/common/open-section.yaml
+    env:
+      SECTION: albums
+- takeScreenshot: docs/screenshots/2-albums
+- scrollUntilVisible:
+    element: 'Ο Μεγάλος Ερωτικός'
+- tapOn: 'Ο Μεγάλος Ερωτικός'
+- assertVisible:
+    id: 'detail-title'
+- takeScreenshot: docs/screenshots/3-album
+- tapOn:
+    id: 'album-play'
+- extendedWaitUntil:
+    visible:
+      id: 'mini-player'
+    timeout: 10000
+- tapOn:
+    id: 'mini-player'
+- assertVisible:
+    id: 'now-playing'
+- tapOn:
+    id: 'np-play-pause'
+- takeScreenshot: docs/screenshots/4-now-playing
+- back
+- back
+- runFlow:
+    file: ../.maestro/common/open-section.yaml
+    env:
+      SECTION: songs
+- takeScreenshot: docs/screenshots/1-library
+- tapOn: 'Search'
+- tapOn:
+    id: 'search-input'
+- setClipboard: 'χατζιδακις'
+- pasteText
+- extendedWaitUntil:
+    visible:
+      id: 'search-song-0'
+    timeout: 10000
+- hideKeyboard
+- takeScreenshot: docs/screenshots/5-search
+- runFlow: ../.maestro/common/pc-pair.yaml
+- extendedWaitUntil:
+    visible:
+      id: 'pc-play-pause'
+    timeout: 15000
+- takeScreenshot: docs/screenshots/6-pc-remote
+- tapOn: 'Settings'
+- takeScreenshot: docs/screenshots/7-settings

@@ -1,0 +1,29 @@
+Aulos is an open-source music player that puts the music already on your phone first. The whole library works with no network at all, and when you want more it can stream and download free music from the Internet Archive, or remote-control <a href="https://github.com/nukeop/nuclear">Nuclear</a> on your PC.
+
+<b>Your library, offline</b>
+<ul>
+<li>Plays MP3, FLAC, M4A/AAC, Ogg and Opus files from your phone; choose which folders count.</li>
+<li>Browse by songs, albums and artists; instant search that ignores accents, Greek included.</li>
+<li>Queue, shuffle, repeat, gapless playback and a sleep timer.</li>
+<li>Background playback with notification, lock-screen and Bluetooth controls.</li>
+<li>Playlists (with JSON import and export), favourites and listening history.</li>
+</ul>
+
+<b>Internet Archive</b>
+<ul>
+<li>Search, stream and download public-domain and Creative Commons audio.</li>
+<li>Downloads resume after a restart, can be limited to Wi-Fi and to a storage budget.</li>
+</ul>
+
+<b>Nuclear on your PC</b>
+<ul>
+<li>Find Nuclear on your Wi-Fi or enter its address (Tailscale works too).</li>
+<li>Live remote: play, pause, skip, seek, volume, shuffle, repeat and favourite.</li>
+<li>See and edit the PC's queue, search on the PC, and send a phone track to the PC.</li>
+<li>Import playlists exported from Nuclear.</li>
+</ul>
+
+<b>Private by design</b>
+No accounts, no tracking, no analytics, no ads. Aulos only uses the network for the Internet Archive and your own PC.
+
+Aulos is free software under the GNU General Public License, version 3 or later.

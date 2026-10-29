@@ -92,6 +92,29 @@ describe('Jam client', () => {
     expect(calls.at(-1)?.url).toBe('http://192.168.1.5:4120/api/settings/core.playback.shuffle');
   });
 
+  it('accepts queue items Nuclear has not resolved yet (no status) and failed ones', async () => {
+    const added = '2026-10-29T12:00:00.000Z';
+    const { client } = setup(() =>
+      json({
+        items: [
+          { id: 'q1', track: TRACK, status: 'idle', addedAtIso: added },
+          {
+            id: 'q2',
+            track: TRACK,
+            status: 'error',
+            error: 'streaming:errors.allCandidatesFailed',
+            addedAtIso: added,
+          },
+          { id: 'q3', track: TRACK, addedAtIso: added },
+        ],
+        currentIndex: 1,
+      }),
+    );
+    const queue = await client.queue();
+    expect(queue.items.map((item) => item.status)).toEqual(['idle', 'error', undefined]);
+    expect(queue.currentIndex).toBe(1);
+  });
+
   it('sends every action with Nuclear’s body shapes', async () => {
     const { client, calls } = setup(({ url }) =>
       url.endsWith('/from-queue') ? json({ id: 'pl-9' }) : new Response(null, { status: 200 }),

@@ -19,6 +19,7 @@ const ICON_BACKGROUND = '#1F5FD6';
 const LIGHT_MARK = '#1F6FEB';
 const DARK_MARK = '#6EA8FE';
 const WHITE = '#FFFFFF';
+const BLACK = '#000000';
 
 const PIPE_ANGLE = 17.6;
 const PIPE = 'M -2.6 0 L 2.6 0 L 3.3 33 L 5.8 41 L -5.8 41 L -3.3 33 Z';
@@ -62,7 +63,9 @@ const splash = (color: string) =>
 const RENDERS: Render[] = [
   { file: join(IMAGES, 'icon.png'), size: 1024, svg: legacyIcon },
   { file: join(IMAGES, 'android-icon-foreground.png'), size: 1024, svg: svg(mark(WHITE)) },
-  { file: join(IMAGES, 'android-icon-monochrome.png'), size: 1024, svg: svg(mark(WHITE)) },
+  // Only the alpha of the monochrome layer counts; black keeps it distinct from the foreground
+  // file (lint IconDuplicates).
+  { file: join(IMAGES, 'android-icon-monochrome.png'), size: 1024, svg: svg(mark(BLACK)) },
   { file: join(IMAGES, 'splash-icon.png'), size: 1024, svg: splash(LIGHT_MARK) },
   { file: join(IMAGES, 'splash-icon-dark.png'), size: 1024, svg: splash(DARK_MARK) },
   { file: join(FASTLANE_IMAGES, 'icon.png'), size: 512, svg: legacyIcon },

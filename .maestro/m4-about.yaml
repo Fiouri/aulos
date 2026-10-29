@@ -1,0 +1,29 @@
+# Settings → About: version, licence, source link, privacy statement and the third-party
+# licences screen (first entry expands to its licence text).
+appId: com.anywecon.aulos
+---
+- runFlow: common/fresh-start.yaml
+- tapOn: 'Settings'
+- scrollUntilVisible:
+    element:
+      id: 'settings-privacy'
+- assertVisible:
+    id: 'app-version'
+    text: '1.0.0-rc.1'
+- assertVisible: 'GPL-3.0-or-later'
+- assertVisible: 'https://github.com/Fiouri/aulos'
+- assertVisible:
+    text: 'No accounts, no tracking, no analytics.*'
+- tapOn:
+    id: 'settings-licences'
+- assertVisible: 'Third-party licences'
+- assertVisible:
+    text: '\d+ packages from the production dependency tree.*'
+- tapOn:
+    id: 'licence-0'
+- assertVisible:
+    text: '(?s).*(Permission is hereby granted|Licensed under|ships no licence file).*'
+- takeScreenshot: m4-licences
+- back
+- assertVisible:
+    id: 'settings-licences'
