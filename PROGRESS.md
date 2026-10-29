@@ -1,12 +1,13 @@
-**Current:** M4a Release candidate 1.0.0-rc.1 — done; privacy scrub of the public repo done (current version); S23 dogfood running since 2026-10-29
-**Next step:** Owner: decide whether to rewrite the git history (removes the old screenshots and values from earlier commits; changes every commit id). Keep dogfooding until 2026-11-05, then M4b (prompts/M4.md)
-**Last session:** 2026-10-29 — Privacy scrub: new emulator-only screenshots with fictional media, real addresses/serial/library names replaced, `check-privacy.ps1` + CI step; typecheck, lint, 360 tests, privacy check, Maestro screenshots + m3 3/3 on API 36 pass
+**Current:** M4a Release candidate 1.0.0-rc.1 — done; privacy scrub done (current version and rewritten history); S23 dogfood running since 2026-10-29
+**Next step:** Owner: optionally ask GitHub Support to purge the old commit ids (they still resolve by id); keep dogfooding until 2026-11-05, then M4b (prompts/M4.md)
+**Last session:** 2026-10-29 — Privacy scrub: emulator-only screenshots with fictional media, real values replaced, `check-privacy.ps1` + CI, history rewritten and force-pushed; typecheck, lint, 360 tests, privacy check, Maestro screenshots + m3 3/3 on API 36, history and fresh clone clean
 
 ## Privacy scrub (2026-10-29)
 
 - **Done:** README and F-Droid screenshots regenerated on the API 36 emulator with fictional media (`test-media.ps1 -Mode screenshots`) and mock-jam's screenshots fixture at 10.0.2.2:4120; real LAN/Tailscale addresses, the phone serial and names from the owner's library replaced in docs, scripts and tests; `scripts/check-privacy.ps1` (Tailscale range + local `.privacy-denylist`) in CI and in the CLAUDE.md gate. Backup: `F:\Projects\_backup\aulos-pre-scrub.bundle`.
 - **Verified:** typecheck, lint, 360 unit tests, privacy check (incl. a negative test), screenshot flow and m3 mock-jam flows 3/3 on API 36; every screenshot inspected.
-- **Open risks:** earlier commits on GitHub still contain the old screenshots and values (history not rewritten); the backup bundle contains them too.
+- **History:** rewritten with git-filter-repo and force-pushed (every commit id changed; local tag `v1.0.0-rc.1` moved to the rewritten commit). Anyone with an old clone must re-clone.
+- **Open risks:** GitHub still serves the old commits by their old ids until it garbage-collects them (GitHub Support can purge them); the backup bundle holds the old history.
 
 ## M4a Release candidate 1.0.0-rc.1 (closed 2026-10-29)
 

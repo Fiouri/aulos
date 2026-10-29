@@ -499,18 +499,21 @@ rc.1 arm64-v8a (versionCode 10002) installed with fresh data: library scanned (1
 ### Backup and history
 
 - Backup before any change: `F:\Projects\_backup\aulos-pre-scrub.bundle` (`git bundle verify`: complete history, `main`, `origin/main`, tag `v1.0.0-rc.1`). It still contains the old data; keep it off any public location.
-- History: **not rewritten** in this commit. Earlier commits on GitHub still hold the old screenshots and values until the owner decides on a rewrite.
+- History: **rewritten** with the owner's yes. git-filter-repo a40bce548d2c (`pip install --user`), in place: `--replace-text` and `--replace-message` with literal and regex rules mapping every real value to the neutral one used above (addresses, serial, hostname, library names, the PC security products), `--strip-blobs-with-ids` for the 7 old screenshot blobs (identical in both folders), and a second pass for one leftover mock id. 49 commits kept; every commit id changed. `origin` re-added and `git push --force origin main` (`cee358b...2c870b9`). The annotated tag `v1.0.0-rc.1` was moved by filter-repo to the rewritten "docs: M4a session log, gate results, progress and dogfood start" commit and stays local only.
+- Checked after the rewrite: `git log -p --all` (contents and messages) has 0 hits for the value patterns and 0 for the deny-list (whole word, any case); none of the stripped blob ids exists; a fresh clone from GitHub has the same HEAD and tree as the local repo, 49 commits, the same 0 hits, and no remote tags.
+- Still outside this repo: GitHub keeps serving the old commits by their old ids (checked: an old commit id still resolves through the API) until GitHub garbage-collects them; only GitHub Support can purge them earlier (sensitive data removal request). Old CI runs still point at the old ids. The backup bundle holds the full old history.
 
 ### Verification
 
-| Check                                                                                 | Result                                                    |
-| ------------------------------------------------------------------------------------- | --------------------------------------------------------- |
-| `npm run typecheck`                                                                   | Pass                                                      |
-| `npm run lint` (`--max-warnings 0`)                                                   | Pass, 0 warnings                                          |
-| `npm test -- --ci`                                                                    | Pass, 43 suites / 360 tests                               |
-| `.\scripts\check-privacy.ps1` (Windows PowerShell and pwsh)                           | Pass, 16 deny-list values checked                         |
-| `maestro test scripts/store-screenshots.yaml` on `aulos-api36`                        | Pass, 7 screenshots (first attempt cut by an adb restart) |
-| `m3-pair-manual`, `m3-pc-queue`, `m3-remote-controls` on `aulos-api36`, mock-jam 4125 | 3/3 passed (renamed mock-jam tracks and search term)      |
+| Check                                                                                 | Result                                                                                                                                            |
+| ------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `npm run typecheck`                                                                   | Pass                                                                                                                                              |
+| `npm run lint` (`--max-warnings 0`)                                                   | Pass, 0 warnings                                                                                                                                  |
+| `npm test -- --ci`                                                                    | Pass, 43 suites / 360 tests                                                                                                                       |
+| `.\scripts\check-privacy.ps1` (Windows PowerShell and pwsh)                           | Pass, 16 deny-list values checked                                                                                                                 |
+| `maestro test scripts/store-screenshots.yaml` on `aulos-api36`                        | Pass, 7 screenshots (first attempt cut by an adb restart)                                                                                         |
+| `m3-pair-manual`, `m3-pc-queue`, `m3-remote-controls` on `aulos-api36`, mock-jam 4125 | 3/3 passed (renamed mock-jam tracks and search term)                                                                                              |
+| GitHub CI after the first push (`cee358b`)                                            | Failed: the privacy check flagged a range edge in its own comment (the script was still untracked during the local run); fixed in the next commit |
 
 ### Device state
 
