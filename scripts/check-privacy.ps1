@@ -23,7 +23,7 @@ Set-StrictMode -Version Latest
 $root = Split-Path -Parent $PSScriptRoot
 $denyList = Join-Path $root '.privacy-denylist'
 $allowedTailscale = @('100.64.0.0', '100.64.0.10', '100.64.0.11')
-# 100.64.0.0/10 is 100.64.0.0 - 100.127.255.255; not part of a longer dotted number.
+# 100.64.0.0/10: second octet 64-127; not part of a longer dotted number.
 $tailscale = '(?<![\d.])100\.(?:6[4-9]|[7-9]\d|1[01]\d|12[0-7])\.\d{1,3}\.\d{1,3}(?!\.?\d)'
 
 function Invoke-GitGrep([string[]]$Arguments) {
