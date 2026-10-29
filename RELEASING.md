@@ -87,8 +87,11 @@ never falls back to the debug keystore. `-Paulos.unsignedRelease=true` builds un
    `dist/<version>/SHA256SUMS.txt`. By hand, the same check is
    `apksigner verify --verbose --print-certs <apk>`.
 
-4. Install the arm64-v8a APK over the previous release on a phone and run the Maestro suite
-   (README → Build from source).
+4. Upgrade check on a phone: with the previous release installed, run
+   `maestro test -e JAM_HOST=<PC>:4120 scripts/upgrade-before.yaml` (playlist, favourite,
+   download, saved PC), then `adb install -r dist/<version>/aulos-<version>-arm64-v8a.apk` and
+   `maestro test scripts/upgrade-after.yaml`. Then run the Maestro suite (README → Build from
+   source).
 
 ## Publish
 

@@ -1,0 +1,35 @@
+# Upgrade check, part 2: after `adb install -r <new APK>`, everything from
+# scripts/upgrade-before.yaml is still there, and the library comes back from the database.
+appId: com.anywecon.aulos
+---
+- launchApp
+- extendedWaitUntil:
+    visible:
+      id: 'last-result'
+    timeout: 30000
+- assertNotVisible: 'Not scanned yet'
+
+- runFlow:
+    file: ../.maestro/common/open-section.yaml
+    env:
+      SECTION: playlists
+- tapOn: 'Upgrade check'
+- assertVisible: 'Gapless part 1'
+- back
+- runFlow:
+    file: ../.maestro/common/open-section.yaml
+    env:
+      SECTION: favorites
+- assertVisible: 'Gapless Test'
+- runFlow:
+    file: ../.maestro/common/open-section.yaml
+    env:
+      SECTION: downloads
+- assertVisible: 'Ioanna Georgakopoulou and Vassilis Tsitsanis - I Gerakina'
+
+- tapOn: 'PC'
+- extendedWaitUntil:
+    visible:
+      id: 'pc-status'
+      text: 'Connected'
+    timeout: 15000

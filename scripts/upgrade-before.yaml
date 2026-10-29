@@ -1,0 +1,63 @@
+# Upgrade check, part 1 (RELEASING.md): on the build being replaced, create one of everything an
+# upgrade must keep: a playlist, a favourite album, a downloaded track and a saved PC.
+# Then install the new build over it (adb install -r) and run scripts/upgrade-after.yaml.
+#   maestro --device <serial> test [-e JAM_HOST=<ip>:<port>] scripts/upgrade-before.yaml
+appId: com.anywecon.aulos
+---
+- runFlow: ../.maestro/common/fresh-start.yaml
+
+- runFlow:
+    file: ../.maestro/common/open-section.yaml
+    env:
+      SECTION: playlists
+- tapOn:
+    id: 'playlist-new'
+- inputText: 'Upgrade check'
+- tapOn:
+    id: 'prompt-confirm'
+- back
+- runFlow:
+    file: ../.maestro/common/open-section.yaml
+    env:
+      SECTION: albums
+- scrollUntilVisible:
+    element: 'Gapless Test'
+- tapOn: 'Gapless Test'
+- longPressOn:
+    id: 'album-track-0'
+- tapOn:
+    id: 'selection-add-to-playlist'
+- tapOn: 'Upgrade check'
+- tapOn:
+    id: 'album-favorite'
+- back
+
+- tapOn: 'Search'
+- tapOn:
+    id: 'search-source-archive'
+- tapOn:
+    id: 'search-input'
+- inputText: 'gerakina tsitsanis'
+- extendedWaitUntil:
+    visible:
+      id: 'search-song-0'
+    timeout: 30000
+- hideKeyboard
+- tapOn:
+    id: 'search-song-0-more'
+- tapOn:
+    id: 'menu-download'
+- tapOn: 'Settings'
+- scrollUntilVisible:
+    element:
+      id: 'settings-downloads'
+- tapOn:
+    id: 'settings-downloads'
+- extendedWaitUntil:
+    visible:
+      id: 'download-completed-0'
+    timeout: 120000
+- back
+
+- runFlow: ../.maestro/common/pc-pair.yaml
+- stopApp

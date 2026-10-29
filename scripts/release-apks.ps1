@@ -37,6 +37,13 @@ function Get-BuildTool([string]$Name) {
   return $tool.FullName
 }
 
+function Get-Sha256([string]$Path) {
+  $sha = [Security.Cryptography.SHA256]::Create()
+  $stream = [IO.File]::OpenRead($Path)
+  try { return ([BitConverter]::ToString($sha.ComputeHash($stream)) -replace '-', '').ToLowerInvariant() }
+  finally { $stream.Dispose(); $sha.Dispose() }
+}
+
 function Read-ConfigValue([string]$Pattern) {
   $match = Select-String -Path (Join-Path $Root 'app.config.ts') -Pattern $Pattern | Select-Object -First 1
   if (-not $match) { throw "app.config.ts: no match for $Pattern" }
@@ -82,7 +89,7 @@ foreach ($apk in $apks | Sort-Object Name) {
 
   $name = "aulos-$version-$abi.apk"
   Copy-Item $apk.FullName (Join-Path $dist $name)
-  $hash = (Get-FileHash (Join-Path $dist $name) -Algorithm SHA256).Hash.ToLowerInvariant()
+  $hash = Get-Sha256 (Join-Path $dist $name)
   $sums += "$hash  $name"
   Write-Host ('{0,-36} {1,12:N0} bytes  versionCode {2}  v2+v3 OK' -f $name, $apk.Length, $expectedCode)
 }
