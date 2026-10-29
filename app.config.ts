@@ -1,5 +1,5 @@
 import type { ConfigContext, ExpoConfig } from 'expo/config';
-import { mkdirSync, writeFileSync } from 'node:fs';
+import { mkdirSync, readdirSync, renameSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 
 import {
@@ -11,7 +11,23 @@ import {
   withAppBuildGradle,
   withDangerousMod,
   withFinalizedMod,
+  withGradleProperties,
 } from 'expo/config-plugins';
+
+/** Version name of this release; see RELEASING.md for the version scheme. */
+const VERSION = '1.0.0-rc.1';
+
+/**
+ * Base versionCode of this release (RELEASING.md): it grows by 10 with every published build and
+ * each ABI APK adds its digit below; the universal APK keeps the base.
+ */
+const VERSION_CODE_BASE = 10000;
+
+/** ABIs that get their own APK, with the digit added to the base versionCode. */
+const ABI_DIGITS = { 'armeabi-v7a': 1, 'arm64-v8a': 2, x86_64: 3 } as const;
+
+/** Background of the adaptive launcher icon; the mark itself is drawn by scripts/render-icons.ts. */
+const ICON_BACKGROUND = '#1F5FD6';
 
 type ManifestUsesPermission = NonNullable<AndroidManifest['manifest']['uses-permission']>[number];
 
@@ -156,95 +172,245 @@ android {
         return mod;
       });
 
+/**
+ * One APK per ABI plus a universal APK. Each ABI APK's versionCode is the base plus its digit
+ * (ABI_DIGITS), so an ABI APK always upgrades the universal one. Native code is only built for
+ * these ABIs (no 32-bit x86).
+ */
+const withAbiSplits: ConfigPlugin = (config) => {
+  const abis = Object.keys(ABI_DIGITS);
+  const digits = Object.entries(ABI_DIGITS)
+    .map(([abi, digit]) => `'${abi}': ${digit}`)
+    .join(', ');
+  const withArchitectures = withGradleProperties(config, (mod) => {
+    mod.modResults = mod.modResults.filter(
+      (item) => item.type !== 'property' || item.key !== 'reactNativeArchitectures',
+    );
+    mod.modResults.push({
+      type: 'property',
+      key: 'reactNativeArchitectures',
+      value: abis.join(','),
+    });
+    return mod;
+  });
+  return withAppBuildGradle(withArchitectures, (mod) => {
+    if (mod.modResults.contents.includes('aulosAbiDigits')) return mod;
+    mod.modResults.contents += `
+// ABI splits (app.config.ts withAbiSplits).
+def aulosAbiDigits = [${digits}]
+android {
+    splits {
+        abi {
+            enable true
+            reset()
+            include ${abis.map((abi) => `'${abi}'`).join(', ')}
+            universalApk true
+        }
+    }
+}
+androidComponents {
+    onVariants(selector().all()) { variant ->
+        variant.outputs.each { output ->
+            def abi = output.filters.find { it.filterType.name() == 'ABI' }?.identifier
+            def digit = aulosAbiDigits[abi]
+            if (digit != null) {
+                output.versionCode.set(output.versionCode.get() + digit)
+            }
+        }
+    }
+}
+`;
+    return mod;
+  });
+};
+
+const SIGNING_PROPERTIES = [
+  'AULOS_STORE_FILE',
+  'AULOS_STORE_PASSWORD',
+  'AULOS_KEY_ALIAS',
+  'AULOS_KEY_PASSWORD',
+] as const;
+
+/**
+ * Release signing from the four AULOS_* properties in ~/.gradle/gradle.properties (RELEASING.md).
+ * Without them a release build stops with a message naming the missing ones; it never falls back
+ * to the debug keystore. CI passes -Paulos.unsignedRelease=true to build unsigned APKs.
+ */
+const withReleaseSigning: ConfigPlugin = (config) =>
+  withAppBuildGradle(config, (mod) => {
+    let contents = mod.modResults.contents;
+    if (contents.includes('aulosMissingSigning')) return mod;
+
+    const releaseSigning =
+      /(buildTypes\s*\{[\s\S]*?release\s*\{\s*)(?:\/\/[^\n]*\n\s*)*signingConfig signingConfigs\.debug/;
+    const signingConfigs = /signingConfigs\s*\{/;
+    const androidBlock = /^android\s*\{/m;
+    if (![releaseSigning, signingConfigs, androidBlock].every((anchor) => anchor.test(contents))) {
+      throw new Error('withReleaseSigning: app/build.gradle no longer has the expected layout.');
+    }
+
+    contents = contents.replace(
+      androidBlock,
+      `// Release signing (app.config.ts withReleaseSigning).
+def aulosSigningProperties = [${SIGNING_PROPERTIES.map((p) => `'${p}'`).join(', ')}]
+def aulosUnsignedRelease = (findProperty('aulos.unsignedRelease') ?: 'false').toBoolean()
+def aulosMissingSigning = aulosSigningProperties.findAll { !findProperty(it) }
+
+android {`,
+    );
+    contents = contents.replace(
+      signingConfigs,
+      `signingConfigs {
+        release {
+            if (aulosMissingSigning.isEmpty()) {
+                storeFile file(findProperty('AULOS_STORE_FILE'))
+                storePassword findProperty('AULOS_STORE_PASSWORD')
+                keyAlias findProperty('AULOS_KEY_ALIAS')
+                keyPassword findProperty('AULOS_KEY_PASSWORD')
+            }
+        }`,
+    );
+    contents = contents.replace(
+      releaseSigning,
+      '$1signingConfig aulosUnsignedRelease ? null : signingConfigs.release',
+    );
+    contents += `
+def aulosCheckReleaseSigning = tasks.register('aulosCheckReleaseSigning') {
+    def missing = aulosMissingSigning
+    doLast {
+        if (!missing.isEmpty()) {
+            throw new GradleException("Release signing is not configured: " +
+                "\${missing.join(', ')} missing from ~/.gradle/gradle.properties. " +
+                "See RELEASING.md, or pass -Paulos.unsignedRelease=true for an unsigned build.")
+        }
+    }
+}
+tasks.matching { it.name == 'validateSigningRelease' }.configureEach {
+    dependsOn aulosCheckReleaseSigning
+}
+`;
+    mod.modResults.contents = contents;
+    return mod;
+  });
+
+/**
+ * Expo writes the launcher icons as PNG data under .webp names (lint IconExtension). Resource
+ * names ignore the extension, so the files are renamed to .png once every mod has run.
+ */
+const withPngLauncherIcons: ConfigPlugin = (config) =>
+  withFinalizedMod(config, [
+    'android',
+    (mod) => {
+      const res = join(mod.modRequest.platformProjectRoot, 'app', 'src', 'main', 'res');
+      for (const dir of readdirSync(res).filter((name) => name.startsWith('mipmap-'))) {
+        for (const file of readdirSync(join(res, dir))) {
+          if (file.startsWith('ic_launcher') && file.endsWith('.webp')) {
+            renameSync(join(res, dir, file), join(res, dir, file.replace(/\.webp$/, '.png')));
+          }
+        }
+      }
+      return mod;
+    },
+  ]);
+
 export default ({ config }: ConfigContext): ExpoConfig =>
-  withCleanShareIntentFilters(
-    withNetworkSecurityConfig(
-      withWindowsCmake(
-        withSplashBehaviorTargetApi(
-          withLegacyStoragePermission({
-            ...config,
-            name: 'Aulos',
-            slug: 'aulos',
-            version: '0.1.0',
-            orientation: 'portrait',
-            icon: './assets/images/icon.png',
-            scheme: 'aulos',
-            userInterfaceStyle: 'automatic',
-            platforms: ['android'],
-            android: {
-              package: 'com.anywecon.aulos',
-              versionCode: 1,
-              adaptiveIcon: {
-                backgroundColor: '#E6F4FE',
-                foregroundImage: './assets/images/android-icon-foreground.png',
-                backgroundImage: './assets/images/android-icon-background.png',
-                monochromeImage: './assets/images/android-icon-monochrome.png',
-              },
-              predictiveBackGestureEnabled: false,
-              // POST_NOTIFICATIONS: expo-audio's media playback service posts the player
-              // notification on Android 13+. INTERNET: Internet Archive search, streaming and
-              // downloads over HTTPS (M2).
-              permissions: [
-                'android.permission.READ_MEDIA_AUDIO',
-                'android.permission.POST_NOTIFICATIONS',
-                'android.permission.INTERNET',
-              ],
-              // ACCESS_WIFI_STATE comes with expo-network but is not needed: the connection type
-              // is read from ConnectivityManager (ACCESS_NETWORK_STATE).
-              blockedPermissions: [
-                'android.permission.ACCESS_WIFI_STATE',
-                'android.permission.RECORD_AUDIO',
-                'android.permission.MODIFY_AUDIO_SETTINGS',
-                'android.permission.SYSTEM_ALERT_WINDOW',
-                'android.permission.WRITE_EXTERNAL_STORAGE',
-                'android.permission.VIBRATE',
-              ],
-            },
-            plugins: [
-              'expo-router',
-              [
-                'expo-splash-screen',
-                {
-                  backgroundColor: '#208AEF',
-                  image: './assets/images/splash-icon.png',
-                  imageWidth: 76,
-                },
-              ],
-              [
-                'expo-build-properties',
-                {
+  withPngLauncherIcons(
+    withReleaseSigning(
+      withAbiSplits(
+        withCleanShareIntentFilters(
+          withNetworkSecurityConfig(
+            withWindowsCmake(
+              withSplashBehaviorTargetApi(
+                withLegacyStoragePermission({
+                  ...config,
+                  name: 'Aulos',
+                  slug: 'aulos',
+                  version: VERSION,
+                  orientation: 'portrait',
+                  icon: './assets/images/icon.png',
+                  scheme: 'aulos',
+                  userInterfaceStyle: 'automatic',
+                  platforms: ['android'],
                   android: {
-                    enableMinifyInReleaseBuilds: true,
-                    enableShrinkResourcesInReleaseBuilds: true,
-                    extraProguardRules: PROGUARD_RULES,
+                    package: 'com.anywecon.aulos',
+                    versionCode: VERSION_CODE_BASE,
+                    adaptiveIcon: {
+                      backgroundColor: ICON_BACKGROUND,
+                      foregroundImage: './assets/images/android-icon-foreground.png',
+                      monochromeImage: './assets/images/android-icon-monochrome.png',
+                    },
+                    predictiveBackGestureEnabled: false,
+                    // POST_NOTIFICATIONS: expo-audio's media playback service posts the player
+                    // notification on Android 13+. INTERNET: Internet Archive search, streaming and
+                    // downloads over HTTPS (M2).
+                    permissions: [
+                      'android.permission.READ_MEDIA_AUDIO',
+                      'android.permission.POST_NOTIFICATIONS',
+                      'android.permission.INTERNET',
+                    ],
+                    // ACCESS_WIFI_STATE comes with expo-network but is not needed: the connection type
+                    // is read from ConnectivityManager (ACCESS_NETWORK_STATE).
+                    blockedPermissions: [
+                      'android.permission.ACCESS_WIFI_STATE',
+                      'android.permission.RECORD_AUDIO',
+                      'android.permission.MODIFY_AUDIO_SETTINGS',
+                      'android.permission.SYSTEM_ALERT_WINDOW',
+                      'android.permission.WRITE_EXTERNAL_STORAGE',
+                      'android.permission.VIBRATE',
+                    ],
                   },
-                },
-              ],
-              ['expo-sqlite', { enableFTS: true }],
-              // Receives playlist files from the share sheet (Nuclear exports, Aulos exports).
-              [
-                'expo-sharing',
-                { android: { enabled: true, singleShareMimeTypes: ['application/json'] } },
-              ],
-              [
-                'expo-audio',
-                {
-                  enableBackgroundPlayback: true,
-                  enableBackgroundRecording: false,
-                  microphonePermission: false,
-                  recordAudioAndroid: false,
-                },
-              ],
-            ],
-            experiments: {
-              typedRoutes: true,
-              reactCompiler: true,
-            },
-            extra: {
-              ...config.extra,
-              repositoryUrl: REPOSITORY_URL,
-            },
-          }),
+                  plugins: [
+                    'expo-router',
+                    [
+                      'expo-splash-screen',
+                      {
+                        backgroundColor: '#FFFFFF',
+                        image: './assets/images/splash-icon.png',
+                        imageWidth: 160,
+                        dark: {
+                          backgroundColor: '#0E1012',
+                          image: './assets/images/splash-icon-dark.png',
+                        },
+                      },
+                    ],
+                    [
+                      'expo-build-properties',
+                      {
+                        android: {
+                          enableMinifyInReleaseBuilds: true,
+                          enableShrinkResourcesInReleaseBuilds: true,
+                          extraProguardRules: PROGUARD_RULES,
+                        },
+                      },
+                    ],
+                    ['expo-sqlite', { enableFTS: true }],
+                    // Receives playlist files from the share sheet (Nuclear exports, Aulos exports).
+                    [
+                      'expo-sharing',
+                      { android: { enabled: true, singleShareMimeTypes: ['application/json'] } },
+                    ],
+                    [
+                      'expo-audio',
+                      {
+                        enableBackgroundPlayback: true,
+                        enableBackgroundRecording: false,
+                        microphonePermission: false,
+                        recordAudioAndroid: false,
+                      },
+                    ],
+                  ],
+                  experiments: {
+                    typedRoutes: true,
+                    reactCompiler: true,
+                  },
+                  extra: {
+                    ...config.extra,
+                    repositoryUrl: REPOSITORY_URL,
+                  },
+                }),
+              ),
+            ),
+          ),
         ),
       ),
     ),
