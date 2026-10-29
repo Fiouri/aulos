@@ -46,7 +46,7 @@ onFlowComplete:
     id: 'pc-search'
 - tapOn:
     id: 'pc-search-input'
-- inputText: 'tsitsanis'
+- inputText: 'thorne'
 - extendedWaitUntil:
     visible:
       id: 'pc-result-0'

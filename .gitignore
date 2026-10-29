@@ -57,3 +57,8 @@ modules/*/android/.cxx/
 
 # Maestro screenshots and run output
 .maestro/screenshots/
+
+# personal data deny-list for scripts/check-privacy.ps1 (local values, never commit)
+.privacy-denylist
+# contains the real values it removes; kept local
+prompts/privacy-scrub.md

@@ -2,7 +2,11 @@
  * Mock of Nuclear Jam's HTTP API (packages/docs/integrations/http-api.md) for the M3 Maestro
  * flows on the emulator, which reaches this machine's loopback at 10.0.2.2.
  *
- *   node scripts/mock-jam.ts [--port 4125] [--host 127.0.0.1]
+ *   node scripts/mock-jam.ts [--port 4125] [--host 127.0.0.1] [--fixture tests|screenshots]
+ *
+ * `--fixture screenshots` starts with a queue of fictional tracks for the README and store
+ * screenshots (scripts/store-screenshots.yaml); the default `tests` fixture is what the
+ * Maestro flows expect.
  *
  * Serves health, playback, queue, settings, search, favourites, playlists/from-queue, lyrics
  * and the /api/events stream (named queue / playback / settings events, ": connected" first,
@@ -38,6 +42,10 @@ const option = (name: string, fallback: string) => {
 };
 const PORT = Number(option('port', '4125'));
 const HOST = option('host', '127.0.0.1');
+const FIXTURE = option('fixture', 'tests');
+if (FIXTURE !== 'tests' && FIXTURE !== 'screenshots') {
+  throw new Error(`Unknown fixture ${FIXTURE}: use tests or screenshots`);
+}
 const KEEP_ALIVE_MS = 15_000;
 
 const track = (title: string, artist: string, seconds: number, id: string): Track => ({
@@ -47,15 +55,29 @@ const track = (title: string, artist: string, seconds: number, id: string): Trac
   source: { provider: 'mock', id },
 });
 
-/** What /api/search can find. */
-const CATALOG: Track[] = [
-  track('Rainy Sunday', 'Vassilis Tsitsanis', 192, 'tsitsanis-1'),
+/** What /api/search can find with the tests fixture; the first three start in the queue. */
+const TEST_CATALOG: Track[] = [
+  track('Rainy Sunday', 'Elias Thorne', 192, 'thorne-1'),
   track('Island Road', 'Mara Quill', 185, 'quill-1'),
   track('Gapless part 2', 'Aulos Test', 3, 'gapless-2'),
   track('Café del Mar', 'Mötley Beyoncé', 3, 'cafe'),
   track('Τα Παιδιά του Πειραιά', 'Μάνος Χατζιδάκις', 2, 'peiraia'),
   track('Ta Paidia tou Peiraia (Live)', 'Μάνος Χατζιδάκις', 250, 'peiraia-live'),
 ];
+
+/** Fictional tracks only: everything the screenshots can show of the PC. */
+const SCREENSHOT_CATALOG: Track[] = [
+  track('Lighthouse Static', 'The Paper Lanterns', 214, 'shot-1'),
+  track('Copper Moon', 'Juniper Vale', 187, 'shot-2'),
+  track('Long Way Down the Pier', 'Marlow Reed', 243, 'shot-3'),
+  track('Harbour at Dusk', 'The Paper Lanterns', 201, 'shot-4'),
+  track('Window Seat', 'Juniper Vale', 176, 'shot-5'),
+];
+
+const CATALOG = FIXTURE === 'screenshots' ? SCREENSHOT_CATALOG : TEST_CATALOG;
+const START_QUEUE = FIXTURE === 'screenshots' ? 4 : 3;
+/** Seconds into the first track at start, so the screenshot shows some progress. */
+const START_SEEK = FIXTURE === 'screenshots' ? 71 : 0;
 
 let nextItem = 1;
 const item = (t: Track): QueueItem => ({
@@ -79,10 +101,10 @@ interface State {
 }
 
 const initialState = (): State => ({
-  items: CATALOG.slice(0, 3).map(item),
+  items: CATALOG.slice(0, START_QUEUE).map(item),
   currentIndex: 0,
   status: 'paused',
-  seek: 0,
+  seek: START_SEEK,
   volume: 0.5,
   shuffle: false,
   repeat: 'off',
@@ -339,5 +361,7 @@ createServer((req, res) => {
     else send(res, 400, { error: 'Bad request' });
   });
 }).listen(PORT, HOST, () => {
-  console.log(`mock Nuclear Jam on http://${HOST}:${PORT}/api (emulator: http://10.0.2.2:${PORT})`);
+  console.log(
+    `mock Nuclear Jam (${FIXTURE}) on http://${HOST}:${PORT}/api (emulator: http://10.0.2.2:${PORT})`,
+  );
 });

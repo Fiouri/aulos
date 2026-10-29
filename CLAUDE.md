@@ -34,12 +34,19 @@ Behind the TLS-intercepting proxy on the dev machine, prefix Expo CLI commands w
 - New dependencies must be GPL-3.0-compatible; record licence checks in `SESSIONS.md`.
 - No network calls, analytics or telemetry unless SPEC.md asks for them.
 
+## Privacy
+
+- No real IP addresses, device serials, hostnames, or names/artwork from the owner's music library in commits, docs, tests or screenshots. Use neutral values: LAN `192.168.1.50`, Tailscale `100.64.0.10`, `<device-serial>`, `<phone-hostname>`, fictional track/artist names.
+- Screenshots come only from an emulator with `scripts/test-media.ps1 -Mode screenshots` media and `node scripts/mock-jam.ts --port 4120 --fixture screenshots` (PC at 10.0.2.2:4120), via `scripts/store-screenshots.yaml`. Open every PNG before committing it.
+- `scripts/check-privacy.ps1` (also in CI) fails on Tailscale addresses outside `src/**/__tests__` and on any value in the local, gitignored `.privacy-denylist`. Real values go only in that file.
+
 ## Verification gate
 
 Run before reporting any work done, and in CI:
 
 ```bash
 npm run typecheck && npm run lint && npm test -- --ci
+.\scripts\check-privacy.ps1
 npm run android:prebuild && cd android && ./gradlew lint assembleRelease
 maestro test .maestro/   # or the on-device checklist in SESSIONS.md
 ```

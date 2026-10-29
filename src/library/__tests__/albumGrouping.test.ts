@@ -187,7 +187,11 @@ describe('albums split by per-track album artist tags', () => {
 
   it('shows Various Artists for a merged album when no track artist has half of it', async () => {
     await scanLibrary(db, {
-      query: async () => [streetTape('1', 1, 'A'), streetTape('2', 2, 'B'), streetTape('3', 3, 'C')],
+      query: async () => [
+        streetTape('1', 1, 'A'),
+        streetTape('2', 2, 'B'),
+        streetTape('3', 3, 'C'),
+      ],
     });
     expect((await listAlbums(db, 'name')).map((a) => [a.artist, a.various, a.trackCount])).toEqual([
       [null, 1, 3],

@@ -18,6 +18,9 @@ jobs:
       - run: npm run typecheck
       - run: npm run lint
       - run: npm test -- --ci
+      # The local deny-list is not in the repo, so CI runs the Tailscale-range check only.
+      - run: ./scripts/check-privacy.ps1
+        shell: pwsh
 
   android:
     runs-on: ubuntu-latest

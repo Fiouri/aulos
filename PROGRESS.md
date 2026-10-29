@@ -1,6 +1,12 @@
-**Current:** M4a Release candidate 1.0.0-rc.1 — done; S23 on rc.1, dogfood started 2026-10-29
-**Next step:** Owner: use Aulos daily on the S23 until 2026-11-05 and log in DOGFOOD.md (crashes → Copy error details); then M4b (prompts/M4.md)
-**Last session:** 2026-10-29 — M4a: icon/splash, 1.0.0-rc.1, ABI splits, release signing (v2+v3), About + licences, error screen, docs, F-Droid metadata, public repo Fiouri/aulos (CI green); typecheck, lint, 360 tests, signed lint+assembleRelease, Maestro S23 14/14, API 36 and API 31 13/13 runnable (2 HTTPS flows blocked by the PC's TLS proxy on emulators)
+**Current:** M4a Release candidate 1.0.0-rc.1 — done; privacy scrub of the public repo done (current version); S23 dogfood running since 2026-10-29
+**Next step:** Owner: decide whether to rewrite the git history (removes the old screenshots and values from earlier commits; changes every commit id). Keep dogfooding until 2026-11-05, then M4b (prompts/M4.md)
+**Last session:** 2026-10-29 — Privacy scrub: new emulator-only screenshots with fictional media, real addresses/serial/library names replaced, `check-privacy.ps1` + CI step; typecheck, lint, 360 tests, privacy check, Maestro screenshots + m3 3/3 on API 36 pass
+
+## Privacy scrub (2026-10-29)
+
+- **Done:** README and F-Droid screenshots regenerated on the API 36 emulator with fictional media (`test-media.ps1 -Mode screenshots`) and mock-jam's screenshots fixture at 10.0.2.2:4120; real LAN/Tailscale addresses, the phone serial and names from the owner's library replaced in docs, scripts and tests; `scripts/check-privacy.ps1` (Tailscale range + local `.privacy-denylist`) in CI and in the CLAUDE.md gate. Backup: `F:\Projects\_backup\aulos-pre-scrub.bundle`.
+- **Verified:** typecheck, lint, 360 unit tests, privacy check (incl. a negative test), screenshot flow and m3 mock-jam flows 3/3 on API 36; every screenshot inspected.
+- **Open risks:** earlier commits on GitHub still contain the old screenshots and values (history not rewritten); the backup bundle contains them too.
 
 ## M4a Release candidate 1.0.0-rc.1 (closed 2026-10-29)
 
@@ -26,7 +32,7 @@
 ## M1 Offline player (closed 2026-10-24)
 
 - **Done:** accent-insensitive search (Greek included), Songs/Albums/Artists browse with sorting and detail screens, artwork cache, library folders, player with queue/shuffle/repeat, persistence, background and lock-screen playback, sleep timer, mini player, Now Playing, queue sheet, playlists with drag reorder and JSON export/import, favorites, history and Recent, Search tab, R8 + resource shrinking. Albums group by an album key (album artist, else MediaStore album id, else album + folder); one folder's tracks with differing per-track album artist tags merge into one album unless their track numbers collide.
-- **Verified:** typecheck, lint, 169 unit tests, `gradlew lint assembleRelease`, 8/8 Maestro flows on the S23 (API 36) and an API 31 emulator. S23: scan of 2,028 tracks 1.4 s, cold start 282 ms (median of 5), Songs scroll 0.41 % janky frames, sleep timer pauses with the screen off, "Street Tape 3" shows as one album; 60 min soak keeps playing with the screen off for the whole hour (checked every 5 min), media notification without `POST_NOTIFICATIONS`, lock-screen and media-key controls. Details in `SESSIONS.md`.
+- **Verified:** typecheck, lint, 169 unit tests, `gradlew lint assembleRelease`, 8/8 Maestro flows on the S23 (API 36) and an API 31 emulator. S23: scan of 2,028 tracks 1.4 s, cold start 282 ms (median of 5), Songs scroll 0.41 % janky frames, sleep timer pauses with the screen off, a 12-track album with per-track album artists shows as one album; 60 min soak keeps playing with the screen off for the whole hour (checked every 5 min), media notification without `POST_NOTIFICATIONS`, lock-screen and media-key controls. Details in `SESSIONS.md`.
 - **Open risks:** two same-named albums in one folder whose track numbers never collide would merge; the notification's previous button skips the 3 s restart rule; `node-forge`/`zod` advisories in Expo CLI tooling; APK 94 MiB until ABI splits (M4).
 - **Device testing (owner):** gapless listening on "Gapless Test", physical Bluetooth and wired headset buttons, unplugging headphones pauses. Test media: `scripts/test-media.ps1 -Mode standard` (removed from the S23 after the run).
 

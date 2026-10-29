@@ -9,7 +9,7 @@ import {
 
 const target: MatchFields = {
   title: 'Ráiny Súnday',
-  artist: 'Vassilis Tsitsanis, Sotiria Bellou',
+  artist: 'Elias Thorne, Mara Quill',
   durationMs: 192_000,
 };
 
@@ -33,7 +33,7 @@ describe('Send to PC matcher', () => {
   it('needs title, primary artist and a duration within 3 s when known', () => {
     const same = {
       title: 'rainy sunday',
-      artist: 'Vassilis Tsitsanis',
+      artist: 'Elias Thorne',
       durationMs: 194_900,
     };
     expect(isConfidentMatch(target, same)).toBe(true);
@@ -41,9 +41,7 @@ describe('Send to PC matcher', () => {
     expect(isConfidentMatch(target, { ...same, durationMs: null })).toBe(true);
     expect(isConfidentMatch(target, { ...same, artist: 'Someone Else' })).toBe(false);
     expect(isConfidentMatch(target, { ...same, artist: null })).toBe(false);
-    expect(isConfidentMatch(target, { ...same, title: 'Rainy Sunday (Live)' })).toBe(
-      false,
-    );
+    expect(isConfidentMatch(target, { ...same, title: 'Rainy Sunday (Live)' })).toBe(false);
   });
 
   it('matches a target without an artist only when both durations are known', () => {
@@ -57,19 +55,19 @@ describe('Send to PC matcher', () => {
       {
         id: 'live',
         title: 'Rainy Sunday (Live)',
-        artist: 'Vassilis Tsitsanis',
+        artist: 'Elias Thorne',
         durationMs: 192_000,
       },
       {
         id: 'far',
         title: 'Rainy Sunday',
-        artist: 'Vassilis Tsitsanis',
+        artist: 'Elias Thorne',
         durationMs: 194_500,
       },
       {
         id: 'near',
         title: 'Rainy Sunday',
-        artist: 'Vassilis Tsitsanis',
+        artist: 'Elias Thorne',
         durationMs: 191_000,
       },
     ];

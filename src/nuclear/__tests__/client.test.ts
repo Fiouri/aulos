@@ -8,8 +8,8 @@ import type { JamTrack } from '../schemas';
 /** A track as Nuclear's model shapes it (packages/model/src/index.ts). */
 const TRACK: JamTrack = {
   title: 'Rainy Sunday',
-  artists: [{ name: 'Vassilis Tsitsanis', roles: ['main'] }],
-  album: { title: 'Rebetiko', source: { provider: 'musicbrainz', id: 'rel-1' } },
+  artists: [{ name: 'Elias Thorne', roles: ['main'] }],
+  album: { title: 'Harbour Songs', source: { provider: 'musicbrainz', id: 'rel-1' } },
   durationMs: 192_000,
   artwork: { items: [{ url: 'https://example.org/cover.jpg', purpose: 'cover' }] },
   source: { provider: 'youtube', id: 'abc123', url: 'https://example.org/v/abc123' },
@@ -78,7 +78,7 @@ describe('Jam client', () => {
       return json(true);
     });
     await expect(client.health()).resolves.toEqual({ status: 'ok' });
-    expect((await client.queue()).items[0]?.track.artists[0]?.name).toBe('Vassilis Tsitsanis');
+    expect((await client.queue()).items[0]?.track.artists[0]?.name).toBe('Elias Thorne');
     // Unknown track fields (streamCandidates) survive, so tracks can be sent back as they are.
     expect((await client.queue()).items[0]?.track).toMatchObject({ streamCandidates: [] });
     await expect(client.playback()).resolves.toEqual({
@@ -161,9 +161,9 @@ describe('Jam client', () => {
 
   it('searches with categories and a limit', async () => {
     const { client, calls } = setup(() => json({ tracks: [TRACK], artists: [] }));
-    const results = await client.search('tsitsanis', { types: ['tracks'], limit: 10 });
+    const results = await client.search('thorne', { types: ['tracks'], limit: 10 });
     expect(results.tracks?.[0]?.title).toBe('Rainy Sunday');
-    expect(calls[0]?.body).toEqual({ query: 'tsitsanis', types: ['tracks'], limit: 10 });
+    expect(calls[0]?.body).toEqual({ query: 'thorne', types: ['tracks'], limit: 10 });
   });
 
   it('surfaces the { error } body of a failed request', async () => {

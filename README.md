@@ -7,7 +7,7 @@ on your PC. No accounts, no tracking, no analytics.
 
 <p>
   <img src="docs/screenshots/1-library.png" width="200" alt="Library: songs" />
-  <img src="docs/screenshots/3-album.png" width="200" alt="A Greek album" />
+  <img src="docs/screenshots/3-album.png" width="200" alt="An album with its tracks" />
   <img src="docs/screenshots/4-now-playing.png" width="200" alt="Now Playing" />
   <img src="docs/screenshots/6-pc-remote.png" width="200" alt="Remote control of Nuclear on the PC" />
 </p>

@@ -1,14 +1,27 @@
-# Screenshots for the README (docs/screenshots/) and the F-Droid listing, taken on the S23 with
-# only the standard test media (scripts/test-media.ps1): every other music folder is switched off
-# first, so no third-party artwork shows. The PC tab is paired with mock-jam through adb reverse,
-# so no real listening history shows either. Not part of the test suite. Maestro writes the PNGs
-# under its run folder (~/.maestro/tests/<run>/store-screenshots/takeScreenshot/docs/screenshots/);
-# copy them to docs/screenshots/ and fastlane/metadata/android/en-US/images/phoneScreenshots/.
-#   node scripts/mock-jam.ts
-#   adb -s <serial> reverse tcp:4125 tcp:4125
-#   maestro --device <serial> test -e JAM_HOST=127.0.0.1:4125 -e 'OTHER_FOLDERS=^(?!Music/AulosTest/).*' scripts/store-screenshots.yaml
-#   adb -s <serial> reverse --remove tcp:4125
+# Screenshots for the README (docs/screenshots/) and the F-Droid listing. Taken only on an
+# emulator, with only the fictional media of `scripts/test-media.ps1 -Mode screenshots` and the
+# PC tab paired with mock-jam's screenshots fixture at 10.0.2.2:4120, so no real library,
+# artwork, listening history or address can show. Every other music folder is switched off
+# first. Not part of the test suite. Maestro writes the PNGs under its run folder
+# (~/.maestro/tests/<run>/store-screenshots/takeScreenshot/docs/screenshots/); check every one
+# by eye, then copy them to docs/screenshots/ and
+# fastlane/metadata/android/en-US/images/phoneScreenshots/.
+#   .\scripts\test-media.ps1 -Mode screenshots -Serial <emulator-serial>
+#   node scripts/mock-jam.ts --port 4120 --fixture screenshots
+#   adb -s <emulator-serial> shell cmd uimode night yes
+#   adb -s <emulator-serial> shell settings put global sysui_demo_allowed 1
+#   adb -s <emulator-serial> shell am broadcast -a com.android.systemui.demo -e command enter
+#   adb -s <emulator-serial> shell am broadcast -a com.android.systemui.demo -e command clock -e hhmm 1200
+#   adb -s <emulator-serial> shell am broadcast -a com.android.systemui.demo -e command notifications -e visible false
+#   maestro --device <emulator-serial> test scripts/store-screenshots.yaml
+#   adb -s <emulator-serial> shell am broadcast -a com.android.systemui.demo -e command exit
+#   adb -s <emulator-serial> shell cmd uimode night no
+#   .\scripts\test-media.ps1 -Mode clean -Serial <emulator-serial>
 appId: com.anywecon.aulos
+env:
+  JAM_HOST: 10.0.2.2:4120
+  MOCK_JAM_ADMIN: http://127.0.0.1:4120
+  OTHER_FOLDERS: '^(?!Music/AulosTest/).*'
 ---
 - runFlow: ../.maestro/common/fresh-start.yaml
 - runScript: ../.maestro/common/reset-mock-jam.js
@@ -38,8 +51,8 @@ appId: com.anywecon.aulos
       SECTION: albums
 - takeScreenshot: docs/screenshots/2-albums
 - scrollUntilVisible:
-    element: 'Ο Μεγάλος Ερωτικός'
-- tapOn: 'Ο Μεγάλος Ερωτικός'
+    element: 'Night Ferry'
+- tapOn: 'Night Ferry'
 - assertVisible:
     id: 'detail-title'
 - takeScreenshot: docs/screenshots/3-album
@@ -66,8 +79,7 @@ appId: com.anywecon.aulos
 - tapOn: 'Search'
 - tapOn:
     id: 'search-input'
-- setClipboard: 'χατζιδακις'
-- pasteText
+- inputText: 'lantern'
 - extendedWaitUntil:
     visible:
       id: 'search-song-0'

@@ -9,7 +9,11 @@
             album artist tag, a 4-track album whose featured artists are in per-track album
             artist tags, and two 2-track "Greatest Hits" albums in one folder (22 tracks).
   bulk      standard plus 2,000 short tracks (200 albums of 10) for the performance run.
-  clean     Removes /sdcard/Music/AulosTest (and the Nuclear playlist fixture) from the device
+  screenshots
+            Only fictional English media for the README and store screenshots: 24 short tracks
+            on 4 albums by 3 artists, each album with a generated cover (solid colour and one
+            geometric shape). No real artist, album, song or artwork; no Nuclear fixture.
+  clean    Removes /sdcard/Music/AulosTest (and the Nuclear playlist fixture) from the device
             and rescans.
 
   Files are generated under $env:TEMP\Aulos\test-media and pushed to /sdcard/Music/AulosTest.
@@ -20,11 +24,12 @@
 .EXAMPLE
   .\scripts\test-media.ps1 -Mode standard
   .\scripts\test-media.ps1 -Mode bulk -Serial <device-serial>
+  .\scripts\test-media.ps1 -Mode screenshots -Serial emulator-5554
   .\scripts\test-media.ps1 -Mode clean
 #>
 param(
   [Parameter(Mandatory = $true)]
-  [ValidateSet('standard', 'bulk', 'clean')]
+  [ValidateSet('standard', 'bulk', 'screenshots', 'clean')]
   [string]$Mode,
   [string]$Serial,
   [string]$OutDir = (Join-Path $env:TEMP 'Aulos\test-media')
@@ -250,6 +255,73 @@ function New-BulkSet([string]$Root) {
   Remove-Item $bases
 }
 
+# Cover art for the screenshot set: a solid background with one shape centred on it, drawn by
+# ffmpeg's geq filter (no image files or fonts involved).
+function New-ShapeCover([string]$Path, [string]$Background, [string]$Foreground, [string]$Shape) {
+  $inside = switch ($Shape) {
+    'circle' { 'lt(hypot(X-300,Y-300),170)' }
+    'square' { 'lt(max(abs(X-300),abs(Y-300)),140)' }
+    'diamond' { 'lt(abs(X-300)+abs(Y-300),200)' }
+    'band' { 'lt(abs(X-Y),90)' }
+    default { throw "Unknown cover shape $Shape" }
+  }
+  $channel = {
+    param([int]$Shift)
+    $fg = ([Convert]::ToInt32($Foreground, 16) -shr $Shift) -band 0xFF
+    $bg = ([Convert]::ToInt32($Background, 16) -shr $Shift) -band 0xFF
+    "'if($inside,$fg,$bg)'"
+  }
+  $geq = "geq=r=$(& $channel 16):g=$(& $channel 8):b=$(& $channel 0)"
+  Invoke-Ffmpeg -f lavfi -i 'color=c=black:s=600x600' -vf "format=rgb24,$geq" '-frames:v' 1 $Path
+}
+
+function New-ScreenshotSet([string]$Root) {
+  $albums = @(
+    @{
+      folder = 'Night Ferry'; artist = 'The Paper Lanterns'; album = 'Night Ferry'; year = '2021'
+      cover = @('1B2A4A', 'F2A541', 'circle')
+      titles = @('Harbour at Dusk', 'Night Ferry', 'Lantern Light', 'Salt and Static', 'Upper Deck',
+        'Foghorn Lullaby', 'Morning Pier')
+    },
+    @{
+      folder = 'Paper Kites'; artist = 'The Paper Lanterns'; album = 'Paper Kites'; year = '2018'
+      cover = @('2E7D6B', 'F4EBD0', 'diamond')
+      titles = @('First Wind', 'Paper Kites', 'String and Glue', 'Over the Rooftops', 'Long Tail',
+        'Landing Field')
+    },
+    @{
+      folder = 'Glass Orchard'; artist = 'Juniper Vale'; album = 'Glass Orchard'; year = '2023'
+      cover = @('7A2E4D', 'F7C6D9', 'square')
+      titles = @('Glass Orchard', 'Copper Leaves', 'Quiet Engine', 'Hollow Road', 'Late Bloom',
+        'Window Seat')
+    },
+    @{
+      folder = 'Slow Signals'; artist = 'Marlow Reed'; album = 'Slow Signals'; year = '2020'
+      cover = @('D9D4C7', '3B5BA9', 'band')
+      titles = @('Slow Signals', 'Radio Tower', 'Static Bloom', 'Northbound', 'Last Transmission')
+    }
+  )
+  $tone = 0
+  foreach ($a in $albums) {
+    $dir = Join-Path $Root $a.folder
+    New-Item -ItemType Directory -Force -Path $dir | Out-Null
+    $cover = Join-Path $Root "cover-$($a.folder -replace ' ', '-').png"
+    New-ShapeCover $cover $a.cover[0] $a.cover[1] $a.cover[2]
+    for ($i = 0; $i -lt $a.titles.Count; $i++) {
+      $tone++
+      New-Mp3 (Join-Path $dir ('{0:D2}.mp3' -f ($i + 1))) (220 + 15 * $tone) (40 + 7 * (($tone * 5) % 8)) @{
+        title        = $a.titles[$i]
+        artist       = $a.artist
+        album_artist = $a.artist
+        album        = $a.album
+        track        = "$($i + 1)/$($a.titles.Count)"
+        date         = $a.year
+      } $cover
+    }
+    Remove-Item $cover
+  }
+}
+
 function Get-DeviceSdk {
   return [int]((Invoke-Adb shell getprop ro.build.version.sdk) | Select-Object -First 1).Trim()
 }
@@ -306,8 +378,13 @@ $root = Join-Path $OutDir 'AulosTest'
 if (Test-Path $root) { Remove-Item -Recurse -Force $root }
 New-Item -ItemType Directory -Force -Path $root | Out-Null
 
-Write-Host 'Generating the standard set…'
-New-StandardSet $root
+if ($Mode -eq 'screenshots') {
+  Write-Host 'Generating the screenshot set…'
+  New-ScreenshotSet $root
+} else {
+  Write-Host 'Generating the standard set…'
+  New-StandardSet $root
+}
 if ($Mode -eq 'bulk') {
   Write-Host "Generating $($BulkAlbums * $BulkTracksPerAlbum) bulk tracks…"
   New-BulkSet $root
@@ -322,7 +399,11 @@ Invoke-Adb push $root '/sdcard/Music/' | Out-Null
 $deviceFiles = $files | ForEach-Object {
   '/sdcard/Music/AulosTest/' + $_.FullName.Substring($root.Length + 1).Replace('\', '/')
 }
-Invoke-Adb push $NuclearFixture $NuclearFixtureOnDevice | Out-Null
-Invoke-MediaRescan ($deviceFiles + $NuclearFixtureOnDevice)
+if ($Mode -eq 'screenshots') {
+  Invoke-MediaRescan $deviceFiles
+} else {
+  Invoke-Adb push $NuclearFixture $NuclearFixtureOnDevice | Out-Null
+  Invoke-MediaRescan ($deviceFiles + $NuclearFixtureOnDevice)
+}
 Write-Host "AulosTest tracks in MediaStore: $(Get-TestTrackCount) (generated $($files.Count))"
 Write-Host "Music tracks on the device: $(Get-MusicCount)"
