@@ -372,3 +372,109 @@ Stated before each change and restored afterwards: S23 Tailscale VPN (disconnect
 - The SSE stream needs a GET of the PC state after every (re)connect because Jam sends no snapshot; volume changes made on the PC are only seen at the next reconnect (Jam has no volume event).
 - Nuclear Jam has no authentication; the notice tells users to allow Nuclear only on Private networks. Anyone on the LAN can control the PC — a Nuclear limitation.
 - Cleartext is permitted at the platform level and enforced in app code (see above); any future network library must go through `assertRequestAllowed`.
+
+## 2026-10-29 — M4a Release candidate 1.0.0-rc.1
+
+### Carry-over from M3 (before any change)
+
+Full Maestro suite on the S23 with the installed M3 build (0.1.0, debug-signed) and real Nuclear Jam at 192.168.1.50:4120, `--exclude-tags mock-jam -e EXPECTED_TRACKS=36` (14 own tracks + 22 test tracks): **13/13 flows passed** in 12 min 54 s.
+
+### Built
+
+- **App identity.** Original mark: the aulos (ancient double pipe) drawn as a "Λ" with finger holes, defined once as SVG in `scripts/render-icons.ts` and rasterised with headless Chrome (no image library, no third-party artwork or fonts). Adaptive icon (white foreground on `#1F5FD6`), monochrome layer for Android 13 themed icons (black, so it is not a byte-identical copy of the foreground), round legacy icon (does not fill its square), splash light (`#FFFFFF`, blue mark) and dark (`#0E1012`, light-blue mark), F-Droid `icon.png` 512 px. All template icons replaced; `android-icon-background.png` removed (solid colour). `withPngLauncherIcons` renames Expo's PNG-in-`.webp` launcher files to `.png` (lint IconExtension).
+- **Versioning.** `1.0.0-rc.1`; versionCode = base + ABI digit, base 10000 for rc.1, +10 per published build (RELEASING.md). `CHANGELOG.md` (Keep a Changelog).
+- **ABI splits (`withAbiSplits`).** `splits.abi` for armeabi-v7a, arm64-v8a, x86_64 + universal; per-output versionCode through `androidComponents.onVariants` (AGP 9 has no `applicationVariants`); `reactNativeArchitectures` without 32-bit x86. Survives `prebuild --clean`.
+- **Release signing (`withReleaseSigning`).** `signingConfigs.release` from `AULOS_STORE_FILE`, `AULOS_STORE_PASSWORD`, `AULOS_KEY_ALIAS`, `AULOS_KEY_PASSWORD` in `~/.gradle/gradle.properties`, v2 + v3 enabled; the release build type no longer uses the debug key. Missing properties: `aulosCheckReleaseSigning` runs before `validateSigningRelease`, `packageRelease`, `packageReleaseUniversalApk` and the bundle tasks, and fails with "Release signing is not configured: AULOS_STORE_PASSWORD missing from ~/.gradle/gradle.properties. See RELEASING.md, or pass -Paulos.unsignedRelease=true for an unsigned build." (checked with `-PAULOS_STORE_PASSWORD=`). CI passes `-Paulos.unsignedRelease=true` and uploads the unsigned APKs. The keystore was created by Fiouri (`~/.keystores/aulos/aulos-release.jks`, PKCS12, RSA 4096); no password was read, printed or logged.
+- **About.** Settings → About: version, licence, source code link (`extra.repositoryUrl`), Third-party licences, Privacy ("No accounts, no tracking, no analytics. Aulos only uses the network for the Internet Archive and your own PC."). `src/about/licenceReport.ts` builds name, version, declared licence and licence text for every package of the production dependency tree (package-lock.json without dev and optional packages, so the result is the same on Windows and Linux); identical texts are stored once. `npm run licences` writes `src/about/third-party-licences.json` (506 packages, 211 distinct texts, 401 KB) and runs before every `npm run android:prebuild`; a unit test fails when the committed file is out of date. Screen `app/licences.tsx` (FlashList, tap to expand).
+- **Error boundary.** `src/ui/ErrorBoundary.tsx` wraps the root layout; render errors and fatal errors from the global JS handler show "Something went wrong" with **Copy error details** (expo-clipboard) and **Restart** (`reloadAppAsync` from `expo`). `src/errors/details.ts` formats app version, Android release and API level, time, error, up to 40 stack frames and the component stack, and redacts URIs, URLs, device paths, IPv4/IPv6 addresses and e-mail addresses.
+- **Docs.** README (features, screenshots, install with APK choice, SHA-256 and certificate verification, build from source, Nuclear pairing guide with firewall rules and Tailscale, known limitations, licence), SECURITY.md, RELEASING.md (version scheme, keystore, build, `scripts/release-apks.ps1`, upgrade check, publish), DOGFOOD.md.
+- **F-Droid metadata.** `fastlane/metadata/android/en-US/`: title, short_description (66 chars), full_description, changelogs 10000–10003, `images/icon.png`, 7 phoneScreenshots.
+- **Release tooling.** `scripts/release-apks.ps1` checks every APK (v2 and v3 verified, one signer, certificate = published fingerprint, versionName and versionCode per ABI with aapt2) and writes `dist/<version>/aulos-<version>-<abi>.apk` + `SHA256SUMS.txt`. `scripts/upgrade-before.yaml` / `upgrade-after.yaml` (playlist, favourite album, Internet Archive download and saved PC survive `adb install -r`). `scripts/store-screenshots.yaml` (test media only, PC tab against mock-jam over `adb reverse`). New flow `.maestro/m4-about.yaml`.
+
+### Fix found during the session
+
+- **PC tab empty with "invalidResponse 200".** Nuclear 1.51 omits `status` on a queue item whose stream it is still resolving; the strict queue schema rejected the whole queue snapshot (and queue events), so the PC tab showed nothing. `status` is now optional (nothing in the UI uses it); unit test with idle, error and status-less items.
+
+### New dependency
+
+- `expo-clipboard` 58.0.4 (MIT, GPL-3.0-compatible) for "Copy error details". Adds no permission.
+
+### APK sizes (signed rc.1)
+
+| APK                                | Bytes      | versionCode |
+| ---------------------------------- | ---------- | ----------- |
+| `aulos-1.0.0-rc.1-arm64-v8a.apk`   | 34,305,155 | 10002       |
+| `aulos-1.0.0-rc.1-armeabi-v7a.apk` | 26,849,447 | 10001       |
+| `aulos-1.0.0-rc.1-x86_64.apk`      | 34,930,441 | 10003       |
+| `aulos-1.0.0-rc.1-universal.apk`   | 92,148,592 | 10000       |
+
+M3's single APK was 99,696,827 bytes; the phone download is now 34.3 MB.
+
+`SHA256SUMS.txt` (also checked with `sha256sum -c`: all OK):
+
+```text
+95b0684aa1f908703b5891fcd9d4037ca21079c7e92f8e7ed60edf802f9012df  aulos-1.0.0-rc.1-arm64-v8a.apk
+ea0ca3d559971abb23fe4dc147ae4fba4c267ef40aa864813d432808cda7e104  aulos-1.0.0-rc.1-armeabi-v7a.apk
+adc9db2e88d35485ffc391ba2aca57be3652f1cca208b4486892660aad16844c  aulos-1.0.0-rc.1-universal.apk
+b1cac1fbfad34bbc38398dda9ac1a0d6973d4a6c883d2870305db842f11bc9d4  aulos-1.0.0-rc.1-x86_64.apk
+```
+
+Signing certificate: `CN=Any WeCon, O=Any WeCon, C=GR`, RSA 4096, SHA-256 `e4126faaacf8c7a8db989e0d7e87c45050408a99dcf6c15e1094b2581c4edca1` (RELEASING.md).
+
+### Release checks
+
+- **npm audit --omit=dev:** 15 (11 low, 4 high), all in Expo's build tooling, none in the app bundle: `node-forge` ≤ 1.4.0 and `zod` 3.25.76 nested in `@expo/cli` (high, propagating to `expo`), `deepmerge` in `@expo/config` and `jest-config` (low, propagating to the Expo config packages, `expo-router` and jest). The app's own `zod` is 4.6.7 (≥ 4.6.6, not affected). The only fix offered is an Expo downgrade (`expo@51`); unchanged since M0.
+- **Licence report (production tree, 506 packages):** MIT 453, ISC 23, BSD-3-Clause 6, BlueOak-1.0.0 6, Apache-2.0 5, (MIT OR CC0-1.0) 2, BSD-2-Clause 2, Unlicense 2, (BSD-3-Clause OR GPL-2.0) 1, (MIT OR Apache-2.0) 1, 0BSD 1, CC-BY-4.0 1 (`caniuse-lite`, build data), MIT AND Apache-2.0 1, MPL-2.0 1, Python-2.0 1 (`argparse`, tooling). All GPL-3.0-compatible. 45 packages (mostly `@react-native/*` and `metro*`, all MIT except the BSD-3-Clause `@react-native/debugger-frontend`) ship no licence file; the screen shows their declared licence.
+- **Merged permissions (aapt2, every APK):** `INTERNET`, `POST_NOTIFICATIONS`, `READ_MEDIA_AUDIO`, `READ_EXTERNAL_STORAGE` (maxSdkVersion 32), `FOREGROUND_SERVICE`, `FOREGROUND_SERVICE_MEDIA_PLAYBACK`, `ACCESS_NETWORK_STATE`, `WAKE_LOCK`, `com.anywecon.aulos.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION`. Unchanged from M3. targetSdk 36, compileSdk 37, minSdk 24.
+- **Secrets scan of the full history:** gitleaks 8.30.1 (`gitleaks git --redact`): no leaks, before and after the session's commits. `git log --all --name-only`: no `*.jks`, `*.keystore`, `*.p12`, `*.pem`, `*.key`, `.env*`, `keystore.properties` or `gradle.properties` ever committed. Pattern search for password, secret, token and api-key assignments in added lines: one hit, the TypeScript type `token: string;` of the MediaStore version (false positive); no private keys or provider tokens.
+- **Proprietary Google artifacts:** `:app:dependencies --configuration releaseRuntimeClasspath` (935 lines): no `com.google.android.gms`, `firebase`, `mlkit`, `play-services`, `com.google.android.play` or `datatransport`. The Google artifacts present are open source: `com.google.android.material`, `guava`, `gson`, `findbugs`, `errorprone` (Apache-2.0).
+
+### F-Droid notes (not submitted)
+
+What an F-Droid build recipe has to handle, or what its scanner may flag:
+
+- The build needs Node 22 and `npm ci` + `npm run android:prebuild` before Gradle (Continuous Native Generation; `android/` is not in git).
+- Prebuilt binaries from npm and Maven: React Native's `react-android` and `hermes-android` AARs (Maven Central), the `hermesc` compiler in the `hermes-compiler` npm package, and Expo's prebuilt modules. F-Droid may require building Hermes and React Native from source (srclibs) or accept them case by case.
+- Per-ABI versionCodes (base + 1/2/3, universal = base) need one build block per ABI with a matching `VercodeOperation`; changelogs exist for 10000–10003.
+- Toolchain: Gradle 9.4.1, AGP 9.2.1, compileSdk 37, the NDK from `rootProject.ext.ndkVersion`; the buildserver must have them. The Windows-only CMake 3.31.6 override does not apply on Linux.
+- F-Droid would sign with its own key unless the build is reproducible; users then cannot switch between GitHub and F-Droid APKs without reinstalling.
+
+### Verification
+
+| Check                                                                                                              | Result                                                                                                                                                                                                                                                                                                                                                                                                                                                 |
+| ------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `npm run typecheck`                                                                                                | Pass                                                                                                                                                                                                                                                                                                                                                                                                                                                   |
+| `npm run lint` (`--max-warnings 0`)                                                                                | Pass, 0 warnings                                                                                                                                                                                                                                                                                                                                                                                                                                       |
+| `npm test -- --ci`                                                                                                 | Pass, 43 suites / 360 tests (M3: 327): error details formatter and redaction (14), error boundary (render error, copy, restart, fatal global errors, handler restore), licence report (production filter, names, licence files, declarations, sorting, de-duplication, committed file up to date), Jam queue items without status                                                                                                                      |
+| `npm run android:prebuild`                                                                                         | Pass (licence list regenerated, unchanged)                                                                                                                                                                                                                                                                                                                                                                                                             |
+| `.\gradlew.bat lint assembleRelease` (signed)                                                                      | Pass, R8 on. App lint 0 errors, 22 warnings (M3: 56), **no icon warnings** (IconExtension, IconLauncherShape, IconXmlAndPng and IconDuplicates gone). Remaining: UnusedResources 10, PrivateResource 6 (React Native and Expo resources), one each of UnusedAttribute, ScopedStorage, LockedOrientationActivity, InsecureBaseConfiguration (cleartext, M3 decision), DiscouragedApi, AndroidGradlePluginVersion                                        |
+| Missing signing properties                                                                                         | `:app:packageRelease -PAULOS_STORE_PASSWORD=` fails in `aulosCheckReleaseSigning` with the message above                                                                                                                                                                                                                                                                                                                                               |
+| `apksigner verify --verbose --print-certs` (build-tools 37.0.0), all 4 APKs                                        | v2 true, v3 true, 1 signer, RSA 4096, certificate SHA-256 as above (`scripts/release-apks.ps1`)                                                                                                                                                                                                                                                                                                                                                        |
+| GitHub CI on `Fiouri/aulos` (run 40901217395)                                                                      | Green: checks and android (unsigned split APKs)                                                                                                                                                                                                                                                                                                                                                                                                        |
+| Upgrade on the S23 (release key): universal 10000 → arm64-v8a 10002 with `adb install -r`                          | `upgrade-before`, then `upgrade-after`: the playlist "Upgrade check" with its track, the favourite album, the downloaded Internet Archive track and the saved PC (reconnects) are all kept; the library comes back from the database                                                                                                                                                                                                                   |
+| `maestro test .maestro/` on the S23, rc.1 arm64-v8a, real Nuclear, `--exclude-tags mock-jam -e EXPECTED_TRACKS=36` | 12/14 in the suite run; `m0-launch` and `m1-browse` failed when the adb server restarted under them ("device '<device-serial>' not found", "Device server died"); both re-run: passed. **14/14.** No Aulos entry in the crash buffer                                                                                                                                                                                                                       |
+| Same on the API 36 emulator (new AVD `aulos-api36`, Google APIs x86_64, fresh install of the x86_64 APK, mock-jam) | 12/15 in the suite run; `m1-permission-denied` lost its Maestro session (re-run: passed). `m2-archive-stream` and `m2-download-offline` cannot pass on an emulator here: the dev machine's TLS-intercepting proxy re-signs HTTPS and the emulator does not trust its CA ("Trust anchor for certification path not found"; the app shows "Could not reach the service"). Both passed on the S23. **13/13 of the flows that can run**                    |
+| Same on the API 31 emulator (`aulos-api31`, 0.1.0 uninstalled, fresh install of the x86_64 APK, mock-jam)          | First suite run 6/15: the emulator had been up for hours with 2 GB RAM and turned taps into long presses (file picker and track list went into multi-select). After a cold boot with 4 GB RAM: the 7 non-network failures re-run 7/7, then a full suite run 12/15 with `m1-search-greek` cut by "Connection reset" from adb (re-run: passed) and the two Internet Archive flows blocked by the proxy as on API 36. **13/13 of the flows that can run** |
+
+### Device and PC state changed during the session
+
+Stated before each change and restored: S23 Aulos 0.1.0 (debug key) uninstalled with Fiouri's yes after checking it held no playlists, favourites or downloads (only Maestro test state and one saved PC); rc.1 installed. Test media pushed to the S23 and both emulators, and removed again from the S23 (`test-media.ps1 -Mode clean`: the 14 own tracks remain). `adb reverse tcp:4125` on the S23 for the screenshots, removed. S23 airplane mode toggled by `m2-download-offline` (off at the end). Nuclear on the PC: playback, queue position and volume changed by the flows, restored to stopped at the third queue item and volume 100 %. New AVD `aulos-api36` (user level, 4 GB RAM). The proxy CA was not installed on the emulators.
+
+### S23 dogfood state
+
+rc.1 arm64-v8a (versionCode 10002) installed with fresh data: library scanned (14 tracks), PC 192.168.1.50:4120 saved and connected. DOGFOOD.md started on 2026-10-29.
+
+### Manual checklist (owner)
+
+- [ ] Seven days of daily use (DOGFOOD.md).
+- [ ] Tailscale pairing by 100.x (the README now documents a firewall rule for 100.64.0.0/10; not verified).
+- [ ] A real Nuclear export through the share sheet.
+- [ ] Wi-Fi only on mobile data (needs a SIM with data).
+- [ ] Earlier items: gapless listening, Bluetooth and wired buttons, unplugging headphones, licence link in the browser.
+
+### Open issues
+
+- The adb server on this machine restarted several times during the session (another process or session); Maestro runs that were cut off were re-run.
+- Emulators cannot reach HTTPS hosts through the dev machine's intercepting proxy, so the Internet Archive flows only run on the S23.
+- The PC store reloads queue, playback, settings and volume together; one failing call still blanks the whole snapshot. Fetching them independently would be more forgiving.
+- README and F-Droid screenshots use generated test media and mock-jam only; no third-party artwork or real listening history.

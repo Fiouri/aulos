@@ -1,6 +1,13 @@
-**Current:** M3 Nuclear pairing — closed; gate green on the S23 (real Nuclear Jam) and the API 31 emulator (mock-jam), Tailscale check open
-**Next step:** Owner: let TCP 4120 through on the PC's Tailscale interface (VPN client or third-party firewall) and pair by 100.x; export a playlist from Nuclear and share it to Aulos; decide on the Aulos Link plugin (docs/spikes/aulos-link.md); then M4
-**Last session:** 2026-10-26 — M3: private-network cleartext guard, Jam client + SSE, Wi-Fi discovery and manual pairing, PC tab remote and queue, Send to PC, Nuclear playlist import, Aulos Link spike; typecheck, lint, 327 tests, R8 release build, Maestro 13/13 API 31 and S23 (remote flow re-run after a state-dependent failure)
+**Current:** M4a Release candidate 1.0.0-rc.1 — done; S23 on rc.1, dogfood started 2026-10-29
+**Next step:** Owner: use Aulos daily on the S23 until 2026-11-05 and log in DOGFOOD.md (crashes → Copy error details); then M4b (prompts/M4.md)
+**Last session:** 2026-10-29 — M4a: icon/splash, 1.0.0-rc.1, ABI splits, release signing (v2+v3), About + licences, error screen, docs, F-Droid metadata, public repo Fiouri/aulos (CI green); typecheck, lint, 360 tests, signed lint+assembleRelease, Maestro S23 14/14, API 36 and API 31 13/13 runnable (2 HTTPS flows blocked by the PC's TLS proxy on emulators)
+
+## M4a Release candidate 1.0.0-rc.1 (closed 2026-10-29)
+
+- **Done:** original adaptive/themed icon and light/dark splash; version 1.0.0-rc.1 with versionCode base 10000 + ABI digit; ABI split APKs (arm64-v8a 34.3 MB, armeabi-v7a 26.8 MB, x86_64 34.9 MB, universal 92.1 MB); release signing from `~/.gradle/gradle.properties` with no debug fallback, CI unsigned; Settings → About (version, licence, source, generated third-party licences, privacy); root error screen with redacted "Copy error details" and Restart; README, SECURITY, RELEASING, CHANGELOG, DOGFOOD; fastlane F-Droid metadata with screenshots; release check script and upgrade flows. Fix: PC tab rejected Nuclear queues with unresolved items. New dependency: expo-clipboard (MIT).
+- **Verified:** typecheck, lint, 360 unit tests, signed `gradlew lint assembleRelease` (lint 0 errors, no icon warnings), apksigner v2+v3 on all 4 APKs, SHA256SUMS.txt, GitHub CI green; S23 signed upgrade universal → arm64 kept playlist, favourite, download and saved PC; Maestro S23 14/14 (real Nuclear), API 36 and API 31 fresh installs 13/13 of the flows that can run. npm audit (Expo tooling only), licences all GPL-compatible, permissions unchanged, no proprietary Google artifacts, gitleaks clean. Tag `v1.0.0-rc.1` local only. Details in `SESSIONS.md`.
+- **Open risks:** emulators cannot run the Internet Archive flows behind the PC's TLS proxy; the adb server on this PC restarts under long runs (another process); F-Droid build would need Node/prebuild and may flag React Native's prebuilt binaries; the PC snapshot still fails as a whole if one Jam call fails; Tailscale pairing unverified.
+- **Device testing (owner):** 7-day dogfood (DOGFOOD.md); Tailscale by 100.x; a real Nuclear export via the share sheet; Wi-Fi only on mobile data; gapless, Bluetooth/wired buttons, unplugging.
 
 ## M3 Nuclear pairing (closed 2026-10-26)
 
