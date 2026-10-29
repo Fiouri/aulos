@@ -1,12 +1,37 @@
 # Screenshots for the README (docs/screenshots/) and the F-Droid listing, taken on the S23 with
-# the standard test media (scripts/test-media.ps1) and a paired Nuclear PC. Not part of the
-# test suite. Maestro writes the PNGs under its run folder
-# (~/.maestro/tests/<run>/store-screenshots/takeScreenshot/docs/screenshots/); copy them to
-# docs/screenshots/ and fastlane/metadata/android/en-US/images/phoneScreenshots/.
-#   maestro --device <serial> test -e JAM_HOST=<PC IP>:4120 scripts/store-screenshots.yaml
+# only the standard test media (scripts/test-media.ps1): every other music folder is switched off
+# first, so no third-party artwork shows. The PC tab is paired with mock-jam through adb reverse,
+# so no real listening history shows either. Not part of the test suite. Maestro writes the PNGs
+# under its run folder (~/.maestro/tests/<run>/store-screenshots/takeScreenshot/docs/screenshots/);
+# copy them to docs/screenshots/ and fastlane/metadata/android/en-US/images/phoneScreenshots/.
+#   node scripts/mock-jam.ts
+#   adb -s <serial> reverse tcp:4125 tcp:4125
+#   maestro --device <serial> test -e JAM_HOST=127.0.0.1:4125 -e 'OTHER_FOLDERS=^(?!Music/AulosTest/).*' scripts/store-screenshots.yaml
+#   adb -s <serial> reverse --remove tcp:4125
 appId: com.anywecon.aulos
 ---
 - runFlow: ../.maestro/common/fresh-start.yaml
+- runScript: ../.maestro/common/reset-mock-jam.js
+- tapOn: 'Settings'
+- tapOn:
+    id: 'settings-folders'
+- repeat:
+    while:
+      visible:
+        id: 'folder-switch-.*'
+        text: '${OTHER_FOLDERS}'
+        checked: true
+    commands:
+      - tapOn:
+          id: 'folder-switch-.*'
+          text: '${OTHER_FOLDERS}'
+          checked: true
+- back
+- extendedWaitUntil:
+    visible:
+      id: 'settings-folders'
+    timeout: 30000
+- tapOn: 'Library'
 - runFlow:
     file: ../.maestro/common/open-section.yaml
     env:
