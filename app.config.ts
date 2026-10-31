@@ -224,17 +224,20 @@ androidComponents {
   });
 };
 
-const SIGNING_PROPERTIES = [
-  'AULOS_STORE_FILE',
-  'AULOS_STORE_PASSWORD',
-  'AULOS_KEY_ALIAS',
-  'AULOS_KEY_PASSWORD',
-] as const;
+/** Keystore path and key alias: not secret, read from a Gradle property or the environment. */
+const SIGNING_SETTINGS = ['AULOS_STORE_FILE', 'AULOS_KEY_ALIAS'] as const;
+
+/** Passwords: environment variables only, set for one build by scripts/Build-Release.ps1. */
+const SIGNING_SECRETS = ['AULOS_STORE_PASSWORD', 'AULOS_KEY_PASSWORD'] as const;
+
+const groovyList = (items: readonly string[]): string =>
+  `[${items.map((item) => `'${item}'`).join(', ')}]`;
 
 /**
- * Release signing from the four AULOS_* properties in ~/.gradle/gradle.properties (RELEASING.md).
- * Without them a release build stops with a message naming the missing ones; it never falls back
- * to the debug keystore. CI passes -Paulos.unsignedRelease=true to build unsigned APKs.
+ * Release signing (RELEASING.md). The passwords come only from the process environment, which
+ * scripts/Build-Release.ps1 fills from a prompt for one Gradle run; no file holds them. Without
+ * a value a release build stops with a message naming the missing ones; it never falls back to
+ * the debug keystore. CI passes -Paulos.unsignedRelease=true to build unsigned APKs.
  */
 const withReleaseSigning: ConfigPlugin = (config) =>
   withAppBuildGradle(config, (mod) => {
@@ -252,9 +255,11 @@ const withReleaseSigning: ConfigPlugin = (config) =>
     contents = contents.replace(
       androidBlock,
       `// Release signing (app.config.ts withReleaseSigning).
-def aulosSigningProperties = [${SIGNING_PROPERTIES.map((p) => `'${p}'`).join(', ')}]
+def aulosSigning = [:]
+${groovyList(SIGNING_SETTINGS)}.each { aulosSigning[it] = findProperty(it) ?: System.getenv(it) }
+${groovyList(SIGNING_SECRETS)}.each { aulosSigning[it] = System.getenv(it) }
 def aulosUnsignedRelease = (findProperty('aulos.unsignedRelease') ?: 'false').toBoolean()
-def aulosMissingSigning = aulosSigningProperties.findAll { !findProperty(it) }
+def aulosMissingSigning = aulosSigning.findAll { !it.value }.collect { it.key }
 
 android {`,
     );
@@ -263,10 +268,10 @@ android {`,
       `signingConfigs {
         release {
             if (aulosMissingSigning.isEmpty()) {
-                storeFile file(findProperty('AULOS_STORE_FILE'))
-                storePassword findProperty('AULOS_STORE_PASSWORD')
-                keyAlias findProperty('AULOS_KEY_ALIAS')
-                keyPassword findProperty('AULOS_KEY_PASSWORD')
+                storeFile file(aulosSigning.AULOS_STORE_FILE)
+                storePassword aulosSigning.AULOS_STORE_PASSWORD
+                keyAlias aulosSigning.AULOS_KEY_ALIAS
+                keyPassword aulosSigning.AULOS_KEY_PASSWORD
             }
             enableV2Signing true
             enableV3Signing true
@@ -282,8 +287,9 @@ def aulosCheckReleaseSigning = tasks.register('aulosCheckReleaseSigning') {
     doLast {
         if (!missing.isEmpty()) {
             throw new GradleException("Release signing is not configured: " +
-                "\${missing.join(', ')} missing from ~/.gradle/gradle.properties. " +
-                "See RELEASING.md, or pass -Paulos.unsignedRelease=true for an unsigned build.")
+                "\${missing.join(', ')} not set. Release builds run through " +
+                "scripts/Build-Release.ps1, which prompts for the passwords (RELEASING.md), " +
+                "or pass -Paulos.unsignedRelease=true for an unsigned build.")
         }
     }
 }

@@ -47,18 +47,21 @@ keytool -genkeypair -v -storetype PKCS12 `
   stick stored away from the PC). Losing either means no more updates for existing installs.
 - PKCS12 keystores use one password for the store and the key.
 
-Then add four lines to `~/.gradle/gradle.properties` (outside the repository):
+The keystore path and alias are not secret. `scripts/Build-Release.ps1` uses
+`%USERPROFILE%\.keystores\aulos\aulos-release.jks` and the alias `aulos`; to use another path or
+alias, set `AULOS_STORE_FILE` / `AULOS_KEY_ALIAS` in the PowerShell session (or as Gradle
+properties) before running it.
 
-```properties
-AULOS_STORE_FILE=C:/Users/<you>/.keystores/aulos/aulos-release.jks
-AULOS_STORE_PASSWORD=<password>
-AULOS_KEY_ALIAS=aulos
-AULOS_KEY_PASSWORD=<same password>
-```
-
-The release signing plugin in `app.config.ts` reads them. If one is missing, `assembleRelease`
-stops with "Release signing is not configured: … missing from ~/.gradle/gradle.properties"; it
+The passwords are never stored: not in `~/.gradle/gradle.properties`, `keystore.properties`, a
+`.env` file or a user/machine environment variable. `scripts/Build-Release.ps1` prompts for them
+(`Tools/Signing.psm1`) and hands them to one `gradlew --no-daemon` run as the process-scoped
+variables `AULOS_STORE_PASSWORD` and `AULOS_KEY_PASSWORD`, which it removes when Gradle exits. The
+release signing plugin in `app.config.ts` reads the passwords only from the environment. If a
+value is missing, `assembleRelease` stops with "Release signing is not configured: … not set"; it
 never falls back to the debug keystore. `-Paulos.unsignedRelease=true` builds unsigned APKs (CI).
+
+Release builds are owner-only: the prompts refuse non-interactive sessions, so agents and CI
+cannot run the script.
 
 ## Build, sign and verify
 
@@ -66,24 +69,20 @@ never falls back to the debug keystore. `-Paulos.unsignedRelease=true` builds un
 --no-git-tag-version`, `CHANGELOG.md` and
    `fastlane/metadata/android/en-US/changelogs/<versionCode>.txt` (one file per APK versionCode,
    at most 500 characters). Commit.
-2. Gate and build:
+2. Gate, build, sign, verify and collect, in a PowerShell window (owner only):
 
    ```powershell
-   npm ci
-   npm run typecheck; npm run lint; npm test -- --ci
-   $env:NODE_TLS_REJECT_UNAUTHORIZED = '0'   # only behind the TLS-intercepting proxy
-   npm run android:prebuild
-   cd android; .\gradlew.bat lint assembleRelease; cd ..
+   .\scripts\Build-Release.ps1             # add -TlsProxy behind the TLS-intercepting proxy
    ```
 
-3. Verify and collect:
+   It runs `npm ci`, typecheck, lint, the unit tests and `scripts/check-privacy.ps1`, then
+   `npm run android:prebuild`, then asks for the keystore password and the key password (Enter
+   reuses the keystore password) and runs `gradlew --no-daemon lint assembleRelease` with them.
+   No Gradle or Kotlin daemon outlives the build. Last, it runs `scripts/release-apks.ps1`.
 
-   ```powershell
-   .\scripts\release-apks.ps1
-   ```
-
-   For every APK it checks APK Signature Scheme v2 and v3, the certificate fingerprint above and
-   the versionName/versionCode, then writes `dist/<version>/aulos-<version>-<abi>.apk` and
+3. `scripts/release-apks.ps1` (also runnable on its own, it needs no password) checks, for every
+   APK, APK Signature Scheme v2 and v3, the certificate fingerprint above and the
+   versionName/versionCode, then writes `dist/<version>/aulos-<version>-<abi>.apk` and
    `dist/<version>/SHA256SUMS.txt`. By hand, the same check is
    `apksigner verify --verbose --print-certs <apk>`.
 

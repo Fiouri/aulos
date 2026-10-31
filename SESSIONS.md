@@ -518,3 +518,29 @@ rc.1 arm64-v8a (versionCode 10002) installed with fresh data: library scanned (1
 ### Device state
 
 Only the API 36 emulator was used (device lock held for the run); the S23 and its dogfood build were not touched. Afterwards: screenshot and standard test media and the Nuclear fixture removed (`-Mode clean`, 0 music tracks), app data cleared, demo mode off, night mode off, emulator shut down, lock released. The emulator no longer carries the standard test media from M4a; push it again with `-Mode standard` before the next emulator suite run.
+
+## 2026-10-31 — Release signing: passwords prompted at run time, none stored
+
+Applies the global "Signing secrets" rule. No signing secret, keystore or `~/.gradle/gradle.properties` was opened, printed or logged; no signed build was run.
+
+### Changed
+
+- `Tools/Signing.psm1`: copied unchanged from `F:\Projects\_templates\signing`.
+- `withReleaseSigning` (`app.config.ts`): `AULOS_STORE_PASSWORD` and `AULOS_KEY_PASSWORD` come only from `System.getenv()`; `AULOS_STORE_FILE` and `AULOS_KEY_ALIAS` (not secret) from a Gradle property or the environment. Missing values still stop every signed packaging task, now with "Release signing is not configured: … not set. Release builds run through scripts/Build-Release.ps1 …"; `-Paulos.unsignedRelease=true` (CI) unchanged; no debug-key fallback.
+- `scripts/Build-Release.ps1` (owner-only): gate (`npm ci`, typecheck, lint, tests, `check-privacy.ps1`), `android:prebuild`, then `gradlew.bat --no-daemon --no-configuration-cache -Pkotlin.compiler.execution.strategy=out-of-process lint assembleRelease` inside `Use-SigningSecrets` (ordered map: store password, then key password; Enter reuses the first), then `release-apks.ps1`. Fails fast when non-interactive (`CLAUDECODE`, `CI`, redirected stdin). Defaults the non-secret path/alias to `%USERPROFILE%\.keystores\aulos\aulos-release.jks` / `aulos` when the env vars are unset; `-TlsProxy` sets the proxy variables for the run only; every variable it sets is restored afterwards.
+- No daemon outlives a signed build: `--no-daemon` for Gradle; the Kotlin compiler runs out-of-process (one JVM per compilation) because the default Kotlin daemon would keep the environment, and `in-process` ran out of Metaspace (512 MiB in the single-use Gradle JVM: `react-native-worklets` / `react-native-screens:compileReleaseKotlin`).
+- Docs: RELEASING.md (keystore section and build steps), README (build from source), CLAUDE.md (commands, gate uses `-Paulos.unsignedRelease=true`, signed builds are owner-only), prompts/M4.md (M4a step 4, M4b steps 4–6, verification). Removed the `android:release` npm script (a signed build path through the Gradle daemon).
+- `keystore.properties` stays in `.gitignore`; none exists in the repository tree.
+
+### Verification
+
+| Check                                                                                                                     | Result                                                                                                         |
+| ------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------- |
+| `npm run typecheck`                                                                                                       | Pass                                                                                                           |
+| `npm run lint` (`--max-warnings 0`)                                                                                       | Pass, 0 warnings                                                                                               |
+| `npm test -- --ci`                                                                                                        | Pass, 43 suites / 360 tests                                                                                    |
+| `.\scripts\check-privacy.ps1` (new files staged)                                                                          | Pass, 16 deny-list values checked                                                                              |
+| `npm run android:prebuild`                                                                                                | Pass; generated `app/build.gradle` reads both passwords via `System.getenv` only                               |
+| `gradlew --no-daemon :app:aulosCheckReleaseSigning` (no secrets in the environment)                                       | Fails as intended: "AULOS_STORE_PASSWORD, AULOS_KEY_PASSWORD not set" (path and alias resolved)                |
+| `gradlew --no-daemon --no-configuration-cache -Pkotlin…=out-of-process lint assembleRelease -Paulos.unsignedRelease=true` | Pass in 19 min; lint 0 errors, 22 warnings (as M4a); 4 unsigned APKs; no new Gradle/Kotlin daemon left running |
+| `Build-Release.ps1`                                                                                                       | Parses; PSScriptAnalyzer only `PSAvoidUsingWriteHost`. Not run (owner-only)                                    |

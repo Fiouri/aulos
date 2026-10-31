@@ -20,8 +20,10 @@ npm run lint               # eslint . --max-warnings 0
 npm test -- --ci           # jest
 npm run format             # prettier --write .
 npm run android:prebuild   # expo prebuild -p android --clean
-cd android && ./gradlew lint assembleRelease
+cd android && ./gradlew lint assembleRelease -Paulos.unsignedRelease=true
 ```
+
+Signed release builds are owner-only: Fiouri runs `scripts\Build-Release.ps1`, which prompts for the keystore passwords (`Tools\Signing.psm1`) and passes them to one `gradlew --no-daemon` run as process-scoped `AULOS_STORE_PASSWORD` / `AULOS_KEY_PASSWORD`. Claude never runs it, never builds a signed release, and never reads `~/.gradle/gradle.properties`, keystores or signing env vars.
 
 Behind the TLS-intercepting proxy on the dev machine, prefix Expo CLI commands with `NODE_TLS_REJECT_UNAUTHORIZED=0` and run Gradle with `GRADLE_OPTS=-Djavax.net.ssl.trustStoreType=Windows-ROOT`. Never set these globally or commit them.
 
@@ -47,10 +49,10 @@ Run before reporting any work done, and in CI:
 ```bash
 npm run typecheck && npm run lint && npm test -- --ci
 .\scripts\check-privacy.ps1
-npm run android:prebuild && cd android && ./gradlew lint assembleRelease
+npm run android:prebuild && cd android && ./gradlew lint assembleRelease -Paulos.unsignedRelease=true
 maestro test .maestro/   # or the on-device checklist in SESSIONS.md
 ```
 
 ## Never commit
 
-Keystores (`*.jks`, `*.keystore`), `keystore.properties`, passwords, API keys, `.env` files or any other secret. Release signing keys live outside the repo.
+Keystores (`*.jks`, `*.keystore`), `keystore.properties`, passwords, API keys, `.env` files or any other secret. Release signing keys live outside the repo; their passwords are typed at run time and stored nowhere.

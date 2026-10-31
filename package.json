@@ -12,8 +12,7 @@
     "test": "jest",
     "format": "prettier --write .",
     "licences": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/generate-licences.ts",
-    "android:prebuild": "npm run licences && expo prebuild -p android --clean",
-    "android:release": "cd android && gradlew assembleRelease"
+    "android:prebuild": "npm run licences && expo prebuild -p android --clean"
   },
   "dependencies": {
     "@react-native-community/slider": "5.2.1",

@@ -135,8 +135,9 @@ cd android && ./gradlew lint assembleRelease -Paulos.unsignedRelease=true
 ```
 
 On Windows use `.\gradlew.bat`. Without `-Paulos.unsignedRelease=true` the release build expects the
-signing properties described in [RELEASING.md](RELEASING.md) and stops with a message if they are
-missing; it never falls back to a debug key. For development on a device: `npx expo run:android`.
+release key's passwords in its environment, which only the owner's `scripts/Build-Release.ps1` provides
+(see [RELEASING.md](RELEASING.md)), and stops with a message if they are missing; it never falls back
+to a debug key. For development on a device: `npx expo run:android`.
 
 Tests on a device or emulator use [Maestro](https://maestro.mobile.dev):
 
