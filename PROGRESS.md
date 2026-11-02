@@ -1,12 +1,12 @@
 **Current:** M4a Release candidate 1.0.0-rc.1 — done; release signing now prompts for passwords at run time (no stored secrets); S23 dogfood running since 2026-10-29
-**Next step:** Owner: delete the AULOS_STORE_PASSWORD / AULOS_KEY_PASSWORD lines from ~/.gradle/gradle.properties (and any such user env var); optionally ask GitHub Support to purge the old commit ids; keep dogfooding until 2026-11-05, then M4b (prompts/M4.md), where Fiouri runs scripts\Build-Release.ps1
-**Last session:** 2026-10-31 — Release signing via Tools\Signing.psm1 + scripts\Build-Release.ps1, passwords env-only in the Gradle config; typecheck, lint, 360 tests, privacy check, prebuild + unsigned `lint assembleRelease` (no daemon) green; missing-password check verified
+**Next step:** Owner: optionally ask GitHub Support to purge the old commit ids; keep dogfooding until 2026-11-05, then M4b (prompts/M4.md), where Fiouri runs scripts\Build-Release.ps1
+**Last session:** 2026-11-02 — Closed the local secret cleanup item (docs only); no secret files tracked; typecheck, lint, tests, privacy check green
 
 ## Release signing secrets (2026-10-31)
 
 - **Done:** passwords no longer stored anywhere: `scripts\Build-Release.ps1` prompts for them (`Tools\Signing.psm1`) and passes them to one `gradlew --no-daemon` run as process-scoped `AULOS_STORE_PASSWORD` / `AULOS_KEY_PASSWORD`; the generated Gradle config reads them only via `System.getenv`. Docs (RELEASING, README, CLAUDE.md, prompts/M4.md) updated.
 - **Verified:** typecheck, lint, 360 unit tests, privacy check, prebuild, unsigned `lint assembleRelease` with the release script's flags, missing-password failure message. The signed path itself is owner-only and was not run.
-- **Owner action:** remove the password lines from `~/.gradle/gradle.properties` (they are now ignored); path/alias lines may stay. Remove any persistent `AULOS_*_PASSWORD` user/machine env vars.
+- **Owner action (closed):** 2026-11-02: no secret cleanup needed; keys verified and backed up offline.
 
 ## Privacy scrub (2026-10-29)
 
